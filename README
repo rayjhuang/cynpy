@@ -1,0 +1,13 @@
+# DVT Utility (cynpy)
+
+USB-to-I2C bridge as the I2C master
+
+
+# 20180817
+## add MacOS X support
+## move to .csh
+# 20180830
+## re-arrange cynpy and rapy structure
+## let users focus on only isp and csp
+
+
