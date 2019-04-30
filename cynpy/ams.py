@@ -28,6 +28,7 @@ class ams (updprl):
         me.MaxCurrent = 0 # specified max current
         me.OprCurrent = 0 # specified operating current
         me.TargetVolt = 0 # specified target voltage in PPS
+        me.AttentionCmd= 0x10 # specified command in sending Attention (checksum)
         me.ppstime = 0
         me.SpecRev = 2 # PD_R3
 
@@ -116,10 +117,17 @@ class ams (updprl):
 
 
     def ams_attention (me):
-        me.upd_tx (15,[0x00000010,0x2a418006]) # SVDM (Attention, checksum)
-        (ndo,mtyp,do) = me.upd_rx (quick=1)
-        me.upd_tx (15,[0x2a410010]) # UVDM
-
+        if (me.AttentionCmd&0xff) == 0x10: # checksum
+            me.upd_tx (15,[0x2a418006,me.AttentionCmd]) # SVDM (Attention)
+            (ndo,mtyp,do) = me.upd_rx (quick=1)
+            me.upd_tx (15,[0x2a410010]) # UVDM
+        elif (me.AttentionCmd&0xff) == 0x02: # program
+            me.upd_tx (15,[0x2a418006,me.AttentionCmd]) # SVDM (Attention)
+            print 'MCU stopped, DATEX table', (me.AttentionCmd>>8)&0x3, \
+                  'is ready for programming'
+        else:
+            print 'Attention command ', me.AttentionCmd, ' not supported'
+            
 
     def ams_goto_rx (me, cmd=0):
         '''
@@ -273,7 +281,8 @@ class ams (updprl):
 
             elif me.kb == ord('>') or \
                  me.kb == ord('=') or \
-                 me.kb == ord('<'): # go string specifying mode
+                 me.kb == ord('<') or \
+                 me.kb == ord('?'): # go string specifying mode
                 me.str = chr(me.kb)
                 print me.str, '\x0D',
 
@@ -294,6 +303,11 @@ class ams (updprl):
                     if tar.isdigit():
                         me.TargetVolt = int(tar)
                         me.str += 'mV target voltage'
+                if me.str[0] == '?': # specify Attention command
+                    tar = me.str.split('?')[-1]
+                    if tar.isdigit():
+                        me.AttentionCmd = int(tar)
+                        me.str += ' Attention command specified'
                 print me.str
                 me.str = '' # reset 'me.str'
             elif me.kb > ord(' '):
@@ -322,6 +336,7 @@ class ams (updprl):
         \rin [AMS_TX] or [AMS_PPS]
         \r(1-key command)
         \r    '1'-'7' : request the PDO
+        \r    'a'     : SVDM (Attention)
         \r    'v'     : VCONN_Swap
         \r    'd'     : DR_Swap
         \r    'r'     : Hard Reset
@@ -330,7 +345,10 @@ class ams (updprl):
         \r    |SPACE| : switch PD2/PD3
         \r    'h'     : show this message
         \r(specifying command, ended by |RETURN|)
-        \r    '='     : target voltage
-        \r    '>'     : operating current
-        \r    '<'     : max. current
+        \r    '?'     : Attention command
+        \r              2/258/514/770 : program
+        \r              10 : checksum
+        \r    '='     : target voltage (PPS)
+        \r    '>'     : operating current (fixed/PPS)
+        \r    '<'     : max. current (fixed)
         '''

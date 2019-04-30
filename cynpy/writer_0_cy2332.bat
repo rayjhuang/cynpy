@@ -19,7 +19,7 @@
 REM SET HEXFILE=..\fw\cy2311r3\Objects\cy2311r3_x004.hex
 REM SET HEXFILE=z:\RD\Project\CAN1112\Ray\fw\cy2332r0_20181024_033.hex
 REM SET BINFILE=temp.bin
-    SET BINFILE=y:\project\git\CY2332_R0\Release\cy2332r0.bin
+    SET BINFILE=Y:\project\git\CY2332_R0\Release\cy2332r0.bin
     ECHO =%BINFILE%=
     IF NOT EXIST %BINFILE% GOTO USAGE
 
@@ -51,15 +51,15 @@ REM python %PROG% upload ..\fw\scp\phy20180605a_prl0605\scp\Objects\scp_20180613
 
 REM compare
 REM ===============================================================================
-REM python %PROG%   comp %BINFILE% ^
-REM                 900=CAN1112B-000 ^
-REM                 33=\90 34=\09 35=\40 36=\E4 37=\93 38=\F5 39=\A2 3A=\80 3B=\FE ^
-REM                 940=\00 941=\00 942=\00 943=\00 944=\00
-
     python %PROG%   comp %BINFILE% ^
-                    900=CAN1110E-000 ^
-                    910=CY2311-16L ^
+                    900=CAN1112A-000 ^
+                    33=\90 34=\09 35=\40 36=\E4 37=\93 38=\F5 39=\A2 3A=\80 3B=\FE ^
                     940=\00 941=\00 942=\00 943=\00 944=\00
+
+REM python %PROG%   comp %BINFILE% ^
+REM                 900=CAN1110E-000 ^
+REM                 910=CY2311-16L ^
+REM                 940=\00 941=\00 942=\00 943=\00 944=\00
 
 REM FT information
 REM writer information
