@@ -292,9 +292,13 @@ class atm (object):
         return lines
 
 
+    def nvm_prog_raw_block (me, wrcod):
+        me.sfrwx (me.sfr.NVMIO, wrcod)
+
+
     def nvm_prog_block (me, addr, wrcod, rawsz, hiv=0, block=256):
         """
-        program the byte-by-byte array 'wrcod' in to the NVM block-by-block
+        program the in-byte array 'wrcod' into NVM block-by-block
         SFR-by-CSP: limit block size by CSP buffer and dummy
         SFR-by-I2C: 100KHz write for PROG timing
         """

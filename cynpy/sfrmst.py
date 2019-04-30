@@ -60,17 +60,34 @@ class tstcsp (can11xx, atm, cspnvm):
         return (len(rawcod), wrcod)
 
 
-    def nvm_prog_block (me, addr, wrcod, rawsz, hiv=0):
+    def calc_cspnvm_block (me):
         """
-        override atm's method
         calc. block length
-        insert dummy byte(s)
         """
         w_unit = (me.sfr.bufsz - me.sfr.nbyte - 2) \
                               / (me.sfr.nbyte + me.sfr.dummy) # CSP command needs 2 bytes
         block = (me.sfr.nbyte + me.sfr.dummy) * w_unit \
                + me.sfr.nbyte # optimize block size by CSP buffer
+        return block
 
+        
+    def nvm_prog_raw_block (me, wrcod):
+        """
+        override atm's method
+        Single-Mode0-Write transaction
+        """
+        print wrcod
+        (rawsz, dmycod) = me.insert_dummy (wrcod, me.calc_cspnvm_block ())
+        print (rawsz, dmycod)
+        super(me.__class__, me).nvm_prog_raw_block (dmycod)
+
+
+    def nvm_prog_block (me, addr, wrcod, rawsz, hiv=0):
+        """
+        override atm's method
+        insert dummy byte(s)
+        """
+        block = me.calc_cspnvm_block ()
         (rawsz, dmycod) = me.insert_dummy (wrcod, block)
         super(me.__class__, me).nvm_prog_block (addr, dmycod, rawsz, hiv, block)
 

@@ -59,10 +59,12 @@ def tstmst_func (tstmst):
 
     elif sys.argv[1]=='d' or \
          sys.argv[1]=='dump'  : # show SFR
-        if len(sys.argv)==2:    tstmst.sfr_form (0x80,0x80)
+        if   len(sys.argv)==2:  tstmst.sfr_form (0x80,0x80)
+        elif len(sys.argv)==3:  tstmst.sfr_form (argv_hex[2],0x10)
         else:                   tstmst.sfr_form (argv_hex[2],argv_hex[3])
     elif sys.argv[1]=='nvm'   : # show OTP header
-        if len(sys.argv)==2:    tstmst.nvm_form (0x900,0x80)
+        if   len(sys.argv)==2:  tstmst.nvm_form (0x900,0x80)
+        elif len(sys.argv)==3:  tstmst.nvm_form (argv_hex[2],0x80)
         else:                   tstmst.nvm_form (argv_hex[2],argv_hex[3])
 
     elif sys.argv[1]=='stop'  : print tstmst.sfrwx (0xBC,[8]) # stop MCU
@@ -76,6 +78,8 @@ def tstmst_func (tstmst):
     elif sys.argv[1]=='prog_asc' : tstmst.nvm_prog (argv_hex[3],map(ord,list(sys.argv[4])),argv_hex[2])
     elif sys.argv[1]=='prog_str' : tstmst.nvm_prog_block ( \
                                                     argv_hex[3],map(ord,list(sys.argv[4])),len(sys.argv[4]),argv_hex[2])
+    elif sys.argv[1]=='prog_raw' : tstmst.nvm_prog_raw_block (argv_hex[2:] if len(sys.argv)>3 else \
+                                                                map(ord,list(sys.argv[2])))
     elif sys.argv[1]=='dnload'   : tstmst.nvm_download (sys.argv[2])
     elif sys.argv[1]=='upload'   : tstmst.nvm_upload_block (sys.argv[2],argv_hex[3])
     elif sys.argv[1]=='burst'    : tstmst.nvm_upload_burst (sys.argv[2],argv_hex[3])
