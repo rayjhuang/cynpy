@@ -319,7 +319,8 @@ class atm (object):
 
         ofs = me.sfrrx (me.sfr.OFS, 1)[0]
         endadr = (ofs+dec*256) & me.sfr.nvmmsk
-        print ('ERROR: 0x%04x' % (endadr)) if endadr != addr + rawsz else 'complete'
+        print ('ERROR: 0x%04x' % (endadr)) \
+        if endadr != (addr + rawsz) & me.sfr.nvmmsk else 'complete'
 
 
     def nvm_upload_block (me, memfile, hiv=0):
