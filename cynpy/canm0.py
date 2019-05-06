@@ -25,7 +25,7 @@ class canm0 (updprl):
             sta1 = me.sfrrx (me.sfr.STA1,1)[0] # a little delay make the extra data disapeared??
             
             if (sta1&0x30)==0x10: return ''
-            else:                 return 'CSP cmd discardrd, 0x%02x' % (sta1)
+            else:                 return 'CSP cmd discarded, 0x%02x' % (sta1)
         else:
             return err
 

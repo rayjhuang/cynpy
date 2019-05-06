@@ -1,5 +1,5 @@
 
-from can11xx import cani2c, sfr, TRUE, FALSE
+from can11xx import cani2c, TRUE, FALSE
 
 class updprl (cani2c):
     '''
@@ -105,3 +105,59 @@ class updprl (cani2c):
 
         me.prltx.pop ()
         return ret
+
+
+class sfr (object):
+    """
+    to monitor I2C/CSP register
+    to save read/modify time on communication channel
+    """
+
+    def __init__ (me, sfrmst, port, val=-1, dbmsg=FALSE):
+        me.p = port # port/address
+        me.v = [0] # one element for recovering
+        me.sfrmst = sfrmst
+        me.d = dbmsg
+        if val<0: me.v[0] = me.sfrmst.sfrrx (port, 1)[0] # initial condition
+        else:     me.v[0] = val                          # power-on value
+
+    def __del__ (me):
+        '''
+        DIFFICULT TO CONTROL THIS
+        SO THIS RECOVERY FUNCTION DOESN'T WORK YET
+        '''
+#       me.set (me, me.v[0])
+        print 'SFR.%02X died' % (me.p)
+
+    def doit (me):
+        me.sfrmst.sfrwx (me.p, [me.v[-1]]) # main job of this class
+        if me.d:
+            print 'SFR.%02X: %02X, [' % (me.p,me.v[-1]), \
+                  '%02X ' * len(me.v) % tuple(me.v)
+
+    def get (me): return me.v[-1]
+
+    def set (me, val, force=FALSE): # to set without push
+        assert val==(val&0xff), '"val" out of range'
+        chk = me.v[-1] != val
+        me.v[-1] = val 
+        if force or chk:
+            me.doit ()
+
+    def psh (me, val=-1, force=FALSE):
+        if val<0:
+            me.v += [ me.v[-1] ] # duplicate
+        else:
+            assert val==(val&0xff), '"val" out of range'
+            me.v += [ val ] # push
+            if force or me.v[-1] != me.v[-2]:
+                me.doit ()
+
+    def pop (me, force=FALSE): # resume
+        tmp = me.v.pop ()
+        if force or me.v[-1] != tmp:
+            me.doit ()
+
+    def msk (me, a, o=0):
+        me.psh ((me.v[-1] & a) | o)
+
