@@ -2,7 +2,7 @@
 TRUE  = 1 # ACK, YES
 FALSE = 0 # NAK, NO
 
-class i2c:
+class i2c (object):
     '''
     i2c class hierarchy
     -------------------
@@ -38,10 +38,10 @@ def choose_master (rpt=FALSE):
     -------------------------------
     1. use AARDARK in a non-Windows system
     '''
-    from aardv import aardvark_i2c as aard_i2c
+    from aardv import aardvark_i2c as aa_i2c
     i2cmst = 0
 
-    if aard_i2c().enum (rpt) > 0: i2cmst = aard_i2c(0)
+    if aa_i2c().enum (rpt) > 0: i2cmst = aa_i2c(0)
 
     return i2cmst
 

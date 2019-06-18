@@ -68,7 +68,7 @@ class aardvark:
     def aaSwitchTargetPower (me):
         assert me.handle > 0, 'no AARDVARK device opened'
         sta = aa_target_power (me.handle, AA_TARGET_POWER_QUERY)
-    #   print aa_status_string (sta)
+        print 'QUERY:', aa_status_string (sta)
         if   (sta==AA_TARGET_POWER_BOTH):
             me.aaShowTargetPowerSta (aa_target_power (me.handle, AA_TARGET_POWER_NONE))
         elif (sta==AA_TARGET_POWER_NONE):
@@ -117,6 +117,36 @@ class aardvark_i2c (aardvark, i2c):
         return aa_i2c_write (me.handle, wdat[0], AA_I2C_NO_FLAGS, array('B',wdat[1:]))
 
 
+class aardvark_spi (aardvark):
+    def __init__ (me, p=-1):
+        aardvark.__init__(me, p)
+        if me.handle > 0:
+            aa_configure (me.handle, AA_CONFIG_SPI_I2C) # Ensure that the subsystem is enabled
+            aa_spi_configure (me.handle, 0, 0, AA_SPI_BITORDER_MSB) # Setup the clock phase
+
+    def baud (me, ask=0): # '0' to ask, other for new setting
+        if not me.handle > 0: return 0 # no AARDVARK device opened'
+        return aa_spi_bitrate (me.handle, ask) # Set the bitrate, [125,8000] KHz
+
+    def spix (me, wdat): # SPI transfer
+        if not me.handle > 0: return 0 # no AARDVARK device opened'
+        assert len(wdat) > 0, 'empty write data is not valid'
+        rdat = [xx%256 for xx in range(len(wdat))]
+        return aa_spi_write (me.handle, array('B',wdat), array('B',rdat))
+
+    def read (me, cmd, adr, bycnt): # SPI read
+        (r_cnt,r_dat) = me.spix ([cmd] + \
+                                 [(adr >> 16) & 0xff, (adr >> 8) & 0xff, adr & 0xff] + \
+                                 [xx%256 for xx in range(bycnt)])
+        if (r_cnt < 0):
+            print "error: %s\n" % aa_status_string(count)
+            return []
+        elif (r_cnt != bycnt+4):
+            print "error: read %d bytes (expected %d)" % (r_cnt-4, bycnt)
+
+        return r_dat[4:r_cnt].tolist()
+
+
 
 if __name__ == '__main__':
 
@@ -128,12 +158,23 @@ if __name__ == '__main__':
         print aa_gpio_get (aa.handle)
         print aa_gpio_set (aa.handle, 0x00)
         print aa_gpio_get (aa.handle)
-        pass
 
+    def test_spi_r ():
+        for xx in aardvark_spi(0).read ( \
+                           int(sys.argv[2],16), \
+                           int(sys.argv[3],16), \
+                           int(sys.argv[4])): print '0x%02X' % xx
+        
     from basic import *
     if not no_argument ():
-        if   sys.argv[1]=='enum'  : aardvark().enum (rpt=TRUE)
+        if   sys.argv[1]=='ver'   : aardvark(0).aaShowVersion ()
+        elif sys.argv[1]=='enum'  : aardvark().enum (rpt=TRUE)
         elif sys.argv[1]=='sw'    : aardvark(0).aaSwitchTargetPower ()
         elif sys.argv[1]=='pull'  : aardvark(0).aaSwitchPullup (int(sys.argv[2]))
         elif sys.argv[1]=='test'  : test_only ()
+
+        elif sys.argv[1]=='spi_baud'  : print aardvark_spi(0).baud (argv_dec[2]), 'KHZ'
+        elif sys.argv[1]=='spi_x'     : print aardvark_spi(0).spix (argv_hex[2:])
+        elif sys.argv[1]=='spi_r'     : test_spi_r ()
+
         else: print "command not recognized"

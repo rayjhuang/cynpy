@@ -186,7 +186,7 @@ class atm (object):
         if me.sfr.name=='CAN1108' or \
            me.sfr.name=='CAN1111':
             rlst = []
-            print 'Provide VPP(6.5V) on VC1 for real programming'
+            print 'Provide VPP(6.5V) on VC1 for valid programming'
         else:
             if me.sfr.name.find ('CAN1112')==0:
                 tmp = me.sfrrx (me.sfr.CCCTL,1)[0]
