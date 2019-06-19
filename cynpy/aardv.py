@@ -173,8 +173,8 @@ if __name__ == '__main__':
         elif sys.argv[1]=='pull'  : aardvark(0).aaSwitchPullup (int(sys.argv[2]))
         elif sys.argv[1]=='test'  : test_only ()
 
-        elif sys.argv[1]=='spi_baud'  : print aardvark_spi(0).baud (argv_dec[2]), 'KHZ'
-        elif sys.argv[1]=='spi_x'     : print aardvark_spi(0).spix (argv_hex[2:])
-        elif sys.argv[1]=='spi_r'     : test_spi_r ()
+        elif sys.argv[1]=='spi_b' : print aardvark_spi(0).baud (argv_dec[2]), 'KHZ'
+        elif sys.argv[1]=='spi_x' : print aardvark_spi(0).spix (argv_hex[2:])
+        elif sys.argv[1]=='spi_r' : test_spi_r ()
 
         else: print "command not recognized"
