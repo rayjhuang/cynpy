@@ -83,7 +83,7 @@ class atm (object):
             print me.sfrwx (int(adr_h,16),[int(dat_h,16)])
 
 
-    def scope (me, adr): # read and print the range
+    def scope_sfr (me, adr): # read and print the variation
         import KBHit
         kb = KBHit.KBHit ()
         print me.sfrrx
@@ -179,6 +179,33 @@ class atm (object):
         return \
             2 * (4 * me.sfrrx (me.sfr.DACV0 + chn, 1)[0] \
                   + (me.sfrrx (me.sfr.DACLSB, 1)[0] & 0x03))
+
+
+    def scope_adc (me, chn): # read and print the variation
+        import KBHit
+        kb = KBHit.KBHit ()
+        print 'looped read, press any key.....'
+        cnt = 0
+        r_max = 0
+        r_min = 0xfff
+        me.preset_adc ()
+        sav0 = me.sfrrx (me.sfr.DACEN, 1)
+        me.sfrwx (me.sfr.DACEN, [0x01 << chn])
+        me.sfrwx (me.sfr.DACCTL,[0x4F]) # 10-bit looped
+        while 1:
+            print "\rADC%d(%0d):" % (chn,cnt),
+            try:
+                r_dat  = me.sfrrx (me.sfr.DACV0 + chn, 1)[0] * 4
+                r_dat += me.sfrrx (me.sfr.DACLSB,      1)[0] & 0x03
+                if r_dat<r_min: r_min = r_dat
+                if r_dat>r_max: r_max = r_dat
+                print "%03d %03d %03d mV" % (r_min*2,r_dat*2,r_max*2),
+                cnt += 1
+            except:
+                print "---",
+            if kb.kbhit (): break
+        me.sfrwx (me.sfr.DACEN, sav0)
+        me.sfrwx (me.sfr.DACCTL,[0])
 
 
     def pre_prog (me, hiv=0): # provide high voltage

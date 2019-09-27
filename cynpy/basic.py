@@ -53,9 +53,11 @@ def tstmst_func (tstmst):
     elif sys.argv[1]=='wrx'   : print tstmst.sfrwx (argv_hex[2],argv_hex[3:])
     elif sys.argv[1]=='w' or \
          sys.argv[1]=='write' : tstmst.multi_sfr_write (sys.argv[2:])
-    elif sys.argv[1]=='scope' : tstmst.scope (argv_hex[2])
     elif sys.argv[1]=='loopr' : tstmst.loopr (sys.argv[2:])
     elif sys.argv[1]=='loopw' : tstmst.loopw (sys.argv[2:])
+
+    elif sys.argv[1]=='scope_sfr' : tstmst.scope_sfr (argv_hex[2])
+    elif sys.argv[1]=='scope_adc' : tstmst.scope_adc (argv_hex[2])
 
     elif sys.argv[1]=='d' or \
          sys.argv[1]=='dump'  : # show SFR
