@@ -367,7 +367,7 @@ class atm (object):
         if dat != exp:
             if num  < limit:   print '0x%04X : %02X %c (!=%02X)' % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp)
             if num == limit:   print 'further mismatch is suppressed',
-            if num == limit+1: print '\rfurther mismatches are suppressed',
+#           if num == limit+1: print '\rfurther mismatches are suppressed',
             return 1
         else:
             return 0
@@ -423,17 +423,20 @@ class atm (object):
         expcod = me.get_file (cmdparam[0]) # memfile
         if len(cmdparam) > 1: # exception(s)
             for it in cmdparam[1:]:
-                if it == 'blank': # do blank check
+                if it == 'blank': # do blank check for the remainder
                     blank_check = 1
                 else:
                     [adr_h, text] = it.split('=')
-                    if adr_h == 'block':
+                    if adr_h == 'block': # set block size
                         block_num = int(text,10)
                     else:
                         adr = int(adr_h,16)
-                        if text[0]=='\\':
-                            expcod[adr] = int(text[1:],16)
-                        else:
+                        if text[0]=='\\': # start a hex string (little endian)
+                            text = text.replace('_','')
+                            text = text[1:] if (len(text))%2 else '0'+text[1:] # let len even
+                            for tt in range(len(text)/2):
+                                expcod[adr+(len(text)/2-1-tt)] = int(text[tt*2:tt*2+2],16)
+                        else: # start a char(ascii) string (1st char 1st)
                             for tt in range(len(text)):
                                 if adr+tt < len(expcod):
                                     expcod[adr+tt] = ord(text[tt])
