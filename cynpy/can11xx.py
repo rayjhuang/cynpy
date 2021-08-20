@@ -22,9 +22,12 @@ class can11xx (object):
             revid = me.get_revid ()
 #           print 'master is ready', revid
             if revid > 0: # found
-                if sfr1108().check (revid): me.sfr = sfr1108(revid)
-                if sfr1110().check (revid): me.sfr = sfr1110(revid)
-                if sfr1112().check (revid): me.sfr = sfr1112(revid)
+                if   sfr1108().check (revid): me.sfr = sfr1108(revid)
+                elif sfr1110().check (revid): me.sfr = sfr1110(revid)
+                elif sfr1112().check (revid): me.sfr = sfr1112(revid)
+                else:
+                    print 'un-recognized REVID: %02X' % revid
+                    me.sfr = sfr1112()
 #       else:
 #           print 'master is not ready'
 
