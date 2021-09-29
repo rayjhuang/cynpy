@@ -285,7 +285,8 @@ class sfr1112 (sfr111x):
     dict_id = {0x2a:'CAN1112AX', \
                0x2b:'CAN1112B0', \
                0x2c:'CAN1112B1', \
-               0x2d:'CAN1112B2'}
+               0x2d:'CAN1112B2', \
+               0x2e:'CAN1124A0'}
 
     def __init__ (me, revid=0):
         super(sfr1112,me).__init__ (revid)
