@@ -25,9 +25,10 @@ class can11xx (object):
                 if   sfr1108().check (revid): me.sfr = sfr1108(revid)
                 elif sfr1110().check (revid): me.sfr = sfr1110(revid)
                 elif sfr1112().check (revid): me.sfr = sfr1112(revid)
+                elif sfr1124().check (revid): me.sfr = sfr1124(revid)
                 else:
                     print 'un-recognized REVID: %02X' % revid
-                    me.sfr = sfr1112()
+                    me.sfr = sfr11xx()
 #       else:
 #           print 'master is not ready'
 

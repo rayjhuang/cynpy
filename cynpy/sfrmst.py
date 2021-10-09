@@ -92,8 +92,16 @@ class tstcsp (can11xx, atm, cspnvm):
         super(me.__class__, me).nvm_prog_block (addr, dmycod, rawsz, hiv, block)
 
 
-    def nvm_comp_block (me, expcod, block=32, blank_check=0):
+    def nvm_block_chk (me, start, expcod, mismatch=0, block=32):
         '''
         limit block size by CSP buffer
         '''
-        super(me.__class__, me).nvm_comp_block (expcod, block, blank_check)
+        return \
+        super(me.__class__, me).nvm_block_chk (start, expcod, mismatch, block)
+
+
+    def nvm_comp_block (me, addr, expcod, block=32, blank_check=0):
+        '''
+        limit block size by CSP buffer
+        '''
+        super(me.__class__, me).nvm_comp_block (addr, expcod, block, blank_check)

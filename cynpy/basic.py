@@ -9,8 +9,8 @@ argv_hex = []
 argv_dec = []
 for xx in sys.argv:
     if len(xx) > 0:
-        argv_hex += [int(xx,16)] if all (yy in '+-*/^%' + string.hexdigits for yy in xx) else [xx]
-        argv_dec += [int(xx,10)] if all (yy in '+-*/^%' + string.digits    for yy in xx) else [xx]
+        argv_hex += [int(xx,16)] if all (yy in '+-/^%' + string.hexdigits for yy in xx) else [xx]
+        argv_dec += [int(xx,10)] if all (yy in '+-/^%' + string.digits    for yy in xx) else [xx]
 
 
 def pop_argument ():
@@ -46,34 +46,40 @@ def no_argument ():
 
 
 def tstmst_func (tstmst):
-    if   sys.argv[1]=='rev'   : print tstmst.sfr.name
-    elif sys.argv[1]=='sfr'   : print tstmst.sfr.query_sfr (argv_hex[2])
-    elif sys.argv[1]=='adc'   : print tstmst.get_adc10 (argv_hex[2])
-    elif sys.argv[1]=='read'  : print '0x%02x' % tstmst.sfrrx (argv_hex[2],1)[0]
-    elif sys.argv[1]=='wrx'   : print tstmst.sfrwx (argv_hex[2],argv_hex[3:])
+    if   sys.argv[1]=='rev'    : print tstmst.sfr.name
+    elif sys.argv[1]=='sfr'    : print tstmst.sfr.query_sfr (argv_hex[2])
+    elif sys.argv[1]=='adc'    : print tstmst.get_adc10 (argv_hex[2])
+    elif sys.argv[1]=='read'   : print '0x%02x' % tstmst.sfrrx (argv_hex[2],1)[0]
+    elif sys.argv[1]=='wrx'    : print tstmst.sfrwx (argv_hex[2],argv_hex[3:])
     elif sys.argv[1]=='w' or \
-         sys.argv[1]=='write' : tstmst.multi_sfr_write (sys.argv[2:])
-    elif sys.argv[1]=='loopr' : tstmst.loopr (sys.argv[2:])
-    elif sys.argv[1]=='loopw' : tstmst.loopw (sys.argv[2:])
+         sys.argv[1]=='write'  : tstmst.multi_write (sys.argv[2:])
+    elif sys.argv[1]=='loopw'  : tstmst.loop_write  (sys.argv[2:])
+    elif sys.argv[1]=='loopwr' : tstmst.loop_w_r    (sys.argv[2:])
+    elif sys.argv[1]=='loopr'  : tstmst.loop_read   (sys.argv[2:])
 
-    elif sys.argv[1]=='scope_sfr' : tstmst.scope_sfr (argv_hex[2])
+    elif sys.argv[1]=='scope_sfr' :
+        if   len(sys.argv)==3  : tstmst.scope_sfr (argv_hex[2],1)
+        else                   : tstmst.scope_sfr (argv_hex[2],argv_dec[3])
     elif sys.argv[1]=='scope_adc' : tstmst.scope_adc (argv_hex[2])
 
     elif sys.argv[1]=='d' or \
-         sys.argv[1]=='dump'  : # show SFR
-        if   len(sys.argv)==2:  tstmst.sfr_form (0x80,0x80)
-        elif len(sys.argv)==3:  tstmst.sfr_form (argv_hex[2],0x10)
-        else:                   tstmst.sfr_form (argv_hex[2],argv_hex[3])
-    elif sys.argv[1]=='nvm'   : # show OTP header
-        if   len(sys.argv)==2:  tstmst.nvm_form (0x900,0x80)
-        elif len(sys.argv)==3:  tstmst.nvm_form (argv_hex[2],0x80)
-        else:                   tstmst.nvm_form (argv_hex[2],argv_hex[3])
+         sys.argv[1]=='dump'   : # def sfr_form (me, adr, cnt=16):
+        if   len(sys.argv)==2  : tstmst.sfr_form (0x80,0x80)
+        elif len(sys.argv)==3  : tstmst.sfr_form (argv_hex[2],0x10)
+        else                   : tstmst.sfr_form (argv_hex[2],argv_hex[3])
+    elif sys.argv[1]=='nvm'    : # def nvm_form (me, ofs, cnt):
+        if   len(sys.argv)==2  : tstmst.nvm_form (0x900,0x80)
+        else:
+            if sys.argv[2]=='prog': tstmst.nvm_argv ('prog',argv_hex[4],sys.argv[5:],argv_hex[3])
+            elif len(sys.argv)==3 : tstmst.nvm_form (argv_hex[2],0x80)
+            else                  : tstmst.nvm_form (argv_hex[2],argv_hex[3])
 
-    elif sys.argv[1]=='stop'  : print tstmst.sfrwx (0xBC,[8]) # stop MCU
-    elif sys.argv[1]=='reset' : print tstmst.sfrwx (0xF7,[1,1,1]) # reset MCU
+    elif sys.argv[1]=='stop'   : print tstmst.sfrwx (0xBC,[8]) # stop MCU
+    elif sys.argv[1]=='reset'  : print tstmst.sfrwx (0xF7,[1,1,1]) # reset MCU
 
-    elif sys.argv[1]=='shift'    : tstmst.shift_osc (argv_dec[2])
-    elif sys.argv[1]=='trim'     : tstmst.set_trim ()
+    elif sys.argv[1]=='shift'  : tstmst.shift_osc (argv_dec[2])
+    elif sys.argv[1]=='trim'   : tstmst.set_trim ()
+
     elif sys.argv[1]=='get_trim' : print ['0x%02x' % xx for xx in tstmst.get_trim ()]
 
     elif sys.argv[1]=='prog_hex' : tstmst.nvm_prog (argv_hex[3],argv_hex[4:],argv_hex[2])
@@ -82,9 +88,12 @@ def tstmst_func (tstmst):
                                                     argv_hex[3],map(ord,list(sys.argv[4])),len(sys.argv[4]),argv_hex[2])
     elif sys.argv[1]=='prog_raw' : tstmst.nvm_prog_raw_block (argv_hex[2:] if len(sys.argv)>3 else \
                                                                 map(ord,list(sys.argv[2])))
-    elif sys.argv[1]=='dnload'   : tstmst.nvm_download (sys.argv[2])
-    elif sys.argv[1]=='upload'   : tstmst.nvm_upload_block (sys.argv[2],argv_hex[3])
-    elif sys.argv[1]=='burst'    : tstmst.nvm_upload_burst (sys.argv[2],argv_hex[3])
-    elif sys.argv[1]=='comp'     : tstmst.nvm_compare (sys.argv[2:])
-    elif sys.argv[1]=='test'     : tstmst.test ()
+    elif sys.argv[1]=='dnload' : tstmst.nvm_download (sys.argv[2])
+    elif sys.argv[1]=='upload' : # def nvm_upload_block (me, memfile, addr=0, hiv=0):
+        if   len(sys.argv)==3  : tstmst.nvm_upload_block (sys.argv[2])
+        elif len(sys.argv)==4  : tstmst.nvm_upload_block (sys.argv[2],argv_hex[3],argv_hex[4])
+        else                   : tstmst.nvm_upload_block (sys.argv[2],argv_hex[3],argv_hex[4],argv_hex[5])
+    elif sys.argv[1]=='burst'  : tstmst.nvm_upload_burst (sys.argv[2],argv_hex[3])
+    elif sys.argv[1]=='comp'   : tstmst.nvm_compare (sys.argv[2:])
+    elif sys.argv[1]=='test'   : tstmst.test (sys.argv[2:])
     else: print "command not recognized,", sys.argv[1]

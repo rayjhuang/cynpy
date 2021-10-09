@@ -76,54 +76,89 @@ class atm (object):
         me.sfrwx (me.sfr.DEC, [(ofs+cnt)>>8]) # clear ACK
 
 
-    def multi_sfr_write (me, args): # addr=wdat pairs
-        assert len(args) > 0, 'addr=wdat pair is a must'
-        for it in args[0:]:
-            [adr_h, dat_h] = it.split('=')
-            print me.sfrwx (int(adr_h,16),[int(dat_h,16)])
-
-
-    def scope_sfr (me, adr): # read and print the variation
+    def scope_sfr (me, adr, n_avg=1): # read and print the variation
+        assert n_avg > 0, 'avg number is at least 1'
         import KBHit
         kb = KBHit.KBHit ()
         print me.sfrrx
-        print 'looped read, press any key.....'
+        print 'looped read (avg=%d), press any key.....' % n_avg
         cnt = 0
         r_min = 0xff
         r_max = 0
+        r_avg = [0] * n_avg
         while 1:
-            print "\r0x%02x(%0d):" % (adr,cnt),
+            print "\r0x%02x(%03d):" % (adr,cnt),
             try:
                 r_dat = me.sfrrx (adr,1)[0]
-                if r_dat<r_min: r_min = r_dat
-                if r_dat>r_max: r_max = r_dat
-                print "%02x %02x %02x" % (r_min,r_dat,r_max),
+                r_avg.pop()
+                r_avg.insert(0,r_dat)
+                r_sum = 0
+                r_cnt = [0] * 256
+                for i in range(n_avg):
+                    r_sum += r_avg[i]
+                    r_cnt[r_avg[i]] += 1
+#               print r_avg,
+#               if r_dat<r_min: r_min = r_dat
+#               if r_dat>r_max: r_max = r_dat
+#               print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
+#               print "%3d %3d %3d" % (r_min,r_sum/n_avg,r_max),
+                average = (r_sum+n_avg/2)/n_avg
+                print "avg:%3d " % (average),
+                r_start = (average-3)/5*5
+                r_stop = r_start + 11
+                if r_stop>256: r_stop=256
+#               for i in range(r_start,r_stop):
+#                   print "%3d:%2d " % (i,r_cnt[i]),
                 cnt += 1
             except:
                 print "--",
             if kb.kbhit (): break
 
 
-    def loopr (me, plist): # looped read and print
+    def multi_write (me, args, verbose=1): # addr=wdat pairs
+        assert len(args) > 0, 'addr=wdat pair is a must'
+        for it in args[0:]:
+            [adr_h, dat_h] = it.split('=')
+            rs = me.sfrwx (int(adr_h,16),[int(dat_h,16)])
+            if verbose: print rs
+
+
+    def loop_write (me, plist): # looped writing
+        if (len(plist)>0):
+            import KBHit
+            kb = KBHit.KBHit ()
+            print me.sfrwx
+            print 'looped writing, press any key.....'
+            cnt = 1
+            while 1:
+                print "\r%0d" % cnt,
+                me.multi_write (plist,0)
+                if kb.kbhit (): break
+                cnt += 1
+
+      
+    def loop_read (me, plist): # looped read and print
         if (len(plist)>0):
             import KBHit
             kb = KBHit.KBHit ()
             print me.sfrrx
             print 'looped read, press any key.....'
-            cnt = 0
+            cnt = 1
             while 1:
                 print "\r%0d:" % cnt,
                 for xx in range (len(plist)):
                     try:
                         r_dat = me.sfrrx (int(plist[xx],16),1)[0]
-                        print " %02x: %02x" %(int(plist[xx],16),r_dat),
-                        cnt += 1
+#                       print " %02x: %02x" %(int(plist[xx],16),r_dat),
+                        print " %02x: %3d" %(int(plist[xx],16),r_dat),
                     except:
                         print " %02x: --" %(int(plist[xx],16)),
+#               if not (cnt%10): print
                 if kb.kbhit (): break
+                cnt += 1
 
 
-    def loopw (me, plist): # looped write/read test
+    def loop_w_r (me, plist): # looped write/read test
         if (len(plist[0])>0):
             import KBHit
             kb = KBHit.KBHit ()
@@ -208,79 +243,49 @@ class atm (object):
         me.sfrwx (me.sfr.DACCTL,[0])
 
 
-    def pre_prog (me, hiv=0): # provide high voltage
-        assert hiv==0 or hiv==1, 'error argument, hiv'
-        if me.sfr.name=='CAN1108' or \
-           me.sfr.name=='CAN1111':
-            rlst = []
-            print 'Provide VPP(6.5V) on VC1 for valid programming'
-        else:
-            if me.sfr.name.find ('CAN1112')==0:
-                tmp = me.sfrrx (me.sfr.CCCTL,1)[0]
-                if tmp & 0xc0:
-                    print 'both Rp is to be turned off'
-                    me.sfrwx (me.sfr.CCCTL, [tmp & 0x3f]) # RP?_EN=0
-
-            rlst = \
-                me.sfrrx (me.sfr.PWR_V,1) + \
-                me.sfrrx (me.sfr.SRCCTL,1) # save PWR_V
-            if hiv > 0: # hiv=0 to emulate
-                me.sfrwx (me.sfr.PWR_V, [120]) # set VIN=9.6V
-
-            print 'adj-VIN:',
-            for xx in range(3):
-                print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
-            print 'V'
-
-            me.sfrwx (me.sfr.SRCCTL, [rlst[1] | 0x40]) # set HVLDO high voltage
-
-            if me.sfr.name.find ('CAN1110')==0:
-                me.sfrwx (me.sfr.NVMCTL, [0x10,0x12,0x32]) # set VPP,TM,PROG
-
-        return rlst
-
-
-    def pst_prog (me, rlst): # resume 5V
-        if not \
-          (me.sfr.name=='CAN1108' or \
-           me.sfr.name=='CAN1111'):
-            if me.sfr.name.find ('CAN1110')==0:
-                me.sfrwx (me.sfr.NVMCTL, [0x12,0x10,0x00]) # clr PROG,TM,VPP
-            me.sfrwx (me.sfr.PWR_V,  [rlst[0]]) # recover VIN
-            me.sfrwx (me.sfr.SRCCTL, [rlst[1] &~0x40]) # recover V5 (HVLDO)
-#################################################################################
-###         discharge on socket board likely causes POR
-#           me.sfrwx (me.sfr.SRCCTL, [rlst[1] | 0x02]) # discharge VIN-only
-#           me.sfrwx (me.sfr.SRCCTL, [rlst[1] &~0x02])
-#################################################################################
-###         CC-ISP during voltage decending is not stable
-#           print 'pos-VIN:',
-#           print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
-#           for xx in range(3):
-#               print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
-#           print 'V'
-#################################################################################
-###         so just delay
-            time.sleep(1)
-
-
-    def test (me):
+    def test (me, wlst):
         raise NotImplementedError()
 
 
-    def nvm_prog (me, adr, wlst, hiv=0): # hiv=0 to emulate
+    def nvm_argv (me, cmd, adr, argv, hiv=0):
+        """
+        parse argv
+        """
+        if cmd=='prog':
+            wrcod = []
+            for it in argv:
+                if it.find ('*') > 0:
+                    [wdat,num] = it.split ('*') # special char '*'
+                    wrcod += [int(wdat,10)] * int(num)
+                else:
+                    wrcod += [int(it,10)]
+            me.nvm_prog (adr, wrcod, hiv)
+        else:
+            raise NotImplementedError()
+
+
+    def nvm_prog (me, adr, wlst, hiv=0):
         """
         program @adr those in list 'wlst' byte-by-byte
         slowly write for PROG timing
+        # hiv=0 to emulate (won't switch VPP) and check
+        # hiv=1 to byte-programming
+        # hiv=2 to byte-programming and check
         """
+        assert hiv>=0 and hiv<=2, 'invalid hiv'
         me.nvmset (adr)
-        rlst = me.pre_prog (hiv)
+        rlst = me.sfr.pre_prog (me, hiv)
         for xx in range(len(wlst)):
             me.sfrwx (me.sfr.NVMIO, [wlst[xx]])
-        me.pst_prog (rlst)
+        me.sfr.pst_prog (me, rlst)
+        time.sleep(1) # wait for voltage revovery
 
         dec = me.sfrrx (me.sfr.DEC, 1)[0]
         me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
+
+        if hiv==0 or hiv==2:
+            mismatch = me.nvm_byte_chk (adr, wlst)
+            print ('mismatch: %s' % (mismatch)) if mismatch else 'complete'
 
 
     def get_file (me, memfile):
@@ -331,15 +336,16 @@ class atm (object):
         """
         assert block > 0, 'block size must be positive'
         me.nvmset (addr)
-        rlst = me.pre_prog (hiv)
+        rlst = me.sfr.pre_prog (me, hiv)
         start = time.time ()
 
         for xx in range(0, len(wrcod), block):
             wcnt = block if xx+block <= len(wrcod) else len(wrcod)-xx
             me.sfrwx (me.sfr.NVMIO, wrcod[xx:xx+wcnt])
 
-        me.pst_prog (rlst)
+        me.sfr.pst_prog (me, rlst)
         print "%.1f sec" % (time.time () - start)
+        time.sleep(1) # wait for voltage revovery
 
         dec = me.sfrrx (me.sfr.DEC, 1)[0]
         me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
@@ -350,13 +356,16 @@ class atm (object):
         if endadr != (addr + rawsz) & me.sfr.nvmmsk else 'complete'
 
 
-    def nvm_upload_block (me, memfile, hiv=0):
+    def nvm_upload_block (me, memfile, addr=0, hiv=0):
         """
         load the memory file 'memfile' for uploading to NVM
         """
-        print 'program NVM...',
+        print 'program NVM...', hiv,
         wrcod = me.get_file (memfile)
-        me.nvm_prog_block (0, wrcod, len(wrcod), hiv)
+        me.nvm_prog_block (addr, wrcod, len(wrcod), hiv)
+        if hiv==0 or hiv==2:
+            mismatch = me.nvm_block_chk (addr, wrcod)
+            print 'mismatch:', mismatch if mismatch else 'complete'
 
 
     def show_mismatch (me, adr, dat, exp, num, limit=50):
@@ -365,51 +374,62 @@ class atm (object):
         and show mismatch messages
         """
         if dat != exp:
-            if num  < limit:   print '0x%04X : %02X %c (!=%02X)' % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp)
-            if num == limit:   print 'further mismatch is suppressed',
-#           if num == limit+1: print '\rfurther mismatches are suppressed',
+            if num == 0    : print # the first mismatch
+            if num == limit: print 'suppress further display...',
+            if num  < limit: print '0x%04X : %02X %c (!=%02X)' \
+               % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp)
             return 1
         else:
             return 0
 
 
-    def nvm_chk_blank (me, start, end, mismatch, block=256): # the byte 'end' is not compared
+    def nvm_byte_chk (me, addr, expcod):
         """
-        check if those contents are all '1' block-by-block
+        check byte-by-byte
         """
-        print 'blank check from 0x%04x to 0x%04x' % (start, end),
-        me.nvmset (start)
-        while start < end:
-            rcnt = block if start+block <= end else end-start
-            rdat = me.nvmrx (rcnt)
-            for yy in range(len(rdat)):
-                mismatch += me.show_mismatch (start+yy, rdat[yy], 0xff, mismatch)
-            start += rcnt
+        mismatch = 0
+        me.nvmset (addr)
+        for xx in range(len(expcod)):
+            rdat = me.sfrrx (me.sfr.NVMIO, 1)
+            mismatch += me.show_mismatch (addr+xx, rdat[0], expcod[xx], mismatch)
 
-        me.sfrwx (me.sfr.DEC, [end>>8]) # clear ACK
+        me.sfrwx (me.sfr.DEC, [(addr+len(expcod)-1)>>8]) # clear ACK
         return mismatch
 
-
-    def nvm_comp_block (me, expcod, block=256, blank_check=0):
-        print 'block size =', block
+        
+    def nvm_block_chk (me, start, expcod, mismatch=0, block=256):
+        """
+        check block-by-block
+        """
+        end = start+len(expcod)-1
+        print 'check from 0x%04x to 0x%04x' % (start, end),
+        me.nvmset (start)
         mismatch = 0
-        me.nvmset (0)
-        start = time.time ()
-        for xx in range(0,len(expcod),block):
-            rcnt = block if xx+block <= len(expcod) else len(expcod)-xx
+        for xx in range(start,len(expcod),block):
+            rem = start + len(expcod) - xx
+            rcnt = block if rem >= block else rem
             rdat = me.nvmrx (rcnt)
             for yy in range(len(rdat)):
                 mismatch += me.show_mismatch (yy+xx, rdat[yy], expcod[yy+xx], mismatch)
 
+        assert end+1==xx+rem, ('end address calc error', end, xx, rem)
+        me.sfrwx (me.sfr.DEC, [(end+1)>>8]) # clear ACK
+        return mismatch
+
+
+    def nvm_comp_block (me, addr, expcod, block=256, blank_check=0):
+        """
+        """
+        print 'block size =', block
+        start = time.time ()
+        mismatch = me.nvm_block_chk (addr, expcod, 0, block)
         if blank_check:
             if mismatch: print
-            mismatch = me.nvm_chk_blank (xx + rcnt, me.sfr.nvmsz, mismatch, block)
+            expblank = [0xff] * (me.sfr.nvmsz-addr-len(expcod))
+            mismatch = me.nvm_block_chk (addr+len(expcod), expblank, mismatch, block)
 
         print '%.1f sec' % (time.time () - start)
-        dec = me.sfrrx (me.sfr.DEC, 1)[0]
-        me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
-
-        print ('mismatch: %s' % (mismatch)) if mismatch else 'complete'
+        print 'mismatch:', mismatch if mismatch else 'complete'
 
 
     def nvm_compare (me, cmdparam):
@@ -431,7 +451,7 @@ class atm (object):
                         block_num = int(text,10)
                     else:
                         adr = int(adr_h,16)
-                        if text[0]=='\\': # start a hex string (little endian)
+                        if text[0]=='\\': # start a hex string (little endian, tail is the LSB)
                             text = text.replace('_','')
                             text = text[1:] if (len(text))%2 else '0'+text[1:] # let len even
                             for tt in range(len(text)/2):
@@ -441,8 +461,8 @@ class atm (object):
                                 if adr+tt < len(expcod):
                                     expcod[adr+tt] = ord(text[tt])
 
-        if block_num > 0: me.nvm_comp_block (expcod, block_num, blank_check)
-        else:             me.nvm_comp_block (expcod, blank_check=blank_check)
+        if block_num > 0: me.nvm_comp_block (0, expcod, block_num, blank_check)
+        else:             me.nvm_comp_block (0, expcod, blank_check=blank_check)
 
 
     def nvm_download (me, binfile):
@@ -516,5 +536,7 @@ class atm (object):
         '''
         org = me.sfrrx (me.sfr.sfr_osc, 1)[0]
         new = me.sfr.get_osc (org, delta)
+        assert new<=127 and new >=-128, ('SFR(OSC) to be out-of-range', new)
         me.sfrwx (me.sfr.sfr_osc, [new])
         print 'OSC trim [0x%02X]: 0x%02X -> 0x%02X' % (me.sfr.sfr_osc, org, new)
+

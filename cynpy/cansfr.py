@@ -154,6 +154,12 @@ class sfr1108 (sfr11xx):
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
 
+    def pre_prog (me, tst, hiv=0):
+        rlst = []
+        print 'Provide VPP(6.5V) on VC1 for valid programming'
+        print 'hiv does not matter', hiv
+        return rlst
+
 
 
 class sfr111x (sfr11xx):
@@ -191,16 +197,62 @@ class sfr111x (sfr11xx):
         me.sfr_osc = me.REGTRM0
 
     def get_osc (me, org, delta):
-        new = (org & 0x3f) + delta
+        '''
+        'org' is a signed char
+        '''
+        new = -(((~org+1) & 0x1f)) if (org & 0x20) else (org & 0x1f)
+        new += delta
         if new > 31: new = 31
         if new <-32: new =-32
-        return org & 0xc0 | new
+        return org & 0xc0 | new & 0x3f
 
     def get_sfr_name (me, adr, name=''):
         for k,v in list(vars(sfr111x).iteritems()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
+
+    def pre_prog (me, tst, hiv=0):
+        rlst = \
+            tst.sfrrx (me.PWR_V,1) + \
+            tst.sfrrx (me.SRCCTL,1) # save PWR_V
+        if me.name.find ('CAN1112')==0:
+            rlst += tst.sfrrx (me.CCCTL,1)
+            if rlst[0] & 0xc0:
+                print 'both Rp is to be turned off'
+                tst.sfrwx (me.CCCTL, [rlst[2] & 0x3f]) # RP?_EN=0
+        if hiv > 0: # hiv=0 to emulate
+            tst.sfrwx (me.PWR_V, [120]) # set VIN=9.6V
+
+        print 'adj-VIN:',
+        for xx in range(3):
+            print '%5.2f' % (10.0 * tst.get_adc10 (0) / 1000),
+        print 'V'
+
+        tst.sfrwx (me.SRCCTL, [rlst[1] | 0x40]) # set HVLDO high voltage
+        if me.name.find ('CAN1110')==0:
+            tst.sfrwx (me.NVMCTL, [0x10,0x12,0x32]) # set VPP,TM,PROG
+        return rlst
+
+
+    def pst_prog (me, tst, rlst): # resume 5V
+        if me.name.find ('CAN1110')==0:
+            tst.sfrwx (me.NVMCTL, [0x12,0x10,0x00]) # clr PROG,TM,VPP
+        tst.sfrwx (me.PWR_V,  [rlst[0]]) # recover VIN
+        tst.sfrwx (me.SRCCTL, [rlst[1] &~0x40]) # recover V5 (HVLDO)
+#################################################################################
+###     discharge on socket board likely causes POR
+#       me.sfrwx (me.sfr.SRCCTL, [rlst[1] | 0x02]) # discharge VIN-only
+#       me.sfrwx (me.sfr.SRCCTL, [rlst[1] &~0x02])
+#################################################################################
+###     CC-ISP during voltage decending is not stable
+#       print 'pos-VIN:',
+#       print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
+#       for xx in range(3):
+#           print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
+#       print 'V'
+#################################################################################
+###     so just delay
 
 
 
@@ -285,8 +337,7 @@ class sfr1112 (sfr111x):
     dict_id = {0x2a:'CAN1112AX', \
                0x2b:'CAN1112B0', \
                0x2c:'CAN1112B1', \
-               0x2d:'CAN1112B2', \
-               0x2e:'CAN1124A0'}
+               0x2d:'CAN1112B2'}
 
     def __init__ (me, revid=0):
         super(sfr1112,me).__init__ (revid)
@@ -305,3 +356,25 @@ class sfr1112 (sfr111x):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr111x.get_sfr_name(me,adr,name)
+
+
+
+class sfr1124 (sfr1112):
+
+    NVMCTL  = 0x12 # CAN1124
+
+    dict_id = {0x2e:'CAN1124A0'}
+
+    def __init__ (me, revid=0):
+        super(sfr1124,me).__init__ (revid)
+        me.nvmsz = 0x4080
+
+    def pre_prog (me, tst, hiv=0):
+        rlst = tst.sfrrx (me.NVMCTL,1) # save NVMCTL
+        if hiv > 0: # hiv=0 to emulate
+            tst.sfrwx (me.NVMCTL, [0x80]) # set VPP=V5V (VPP=VDD normally)
+        print 'Also provide VPP=4.0V on V5V for valid programming', hiv
+        return rlst
+
+    def pst_prog (me, tst, rlst): # resume 5V
+        tst.sfrwx (me.NVMCTL, [rlst[0]]) # recover VPP
