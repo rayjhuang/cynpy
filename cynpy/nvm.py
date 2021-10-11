@@ -102,7 +102,7 @@ class nvm (object):
             mismatch = me.nvm_block_chk (param['start'], param['data'])
         else:
             block = int(param['blockr']) if 'blockr' in param else 1
-            assert block>0, 'invalid blockr %d' % block
+            assert block>0, "invalid 'blockr', %d" % block
             mismatch = me.nvm_block_chk (param['start'], param['data'], block)
 
         print ('\nmismatch: %s' % (mismatch)) if mismatch else 'complete'
@@ -115,20 +115,18 @@ class nvm (object):
         hiv=1 to byte-programming
         hiv=2 to byte-programming and check
         """
+        print 'program from 0x%04x to 0x%04x' % (param['start'],param['end']-1)
         hiv = 0 if not 'hiv' in param else int(param['hiv'])
-        assert hiv>=0 and hiv<=2, 'invalid hiv %d' % hiv
-        if 'blockw' in param:
-            if param['blockw']=='':
-                 print 'default block size'
-            else:
-                blockw = int(param['blockw'])
-                assert blockw>0, 'invalid blockw %d' % blockw
-            raise NotImplementedError()
+        assert hiv>=0 and hiv<=2, "invalid 'hiv', %d" % hiv
+        if 'blockw' in param and param['blockw']=='':
+            me.nvm_prog_block (param['start'], param['data'], len(param['data']), hiv=hiv>0)
         else:
-            me.nvm_prog_byte (param['start'], param['data'], hiv>0)
+            block = int(param['blockw']) if 'blockw' in param else 1
+            assert block>0, "invalid 'blockw', %d" % block
+            me.nvm_prog_block (param['start'], param['data'], len(param['data']), block, hiv>0)
 
         if hiv==0 or hiv==2:
-            me.nvmcomp (addr, param)
+            me.nvmcomp (param)
 
 
     def nvmargv (me, argvlst):
@@ -172,7 +170,6 @@ class nvm (object):
         check block-by-block
         byte-by-byte if block=1
         """
-        end = start+len(expcod)
         me.nvmset (start)
         for xx in range(start,start+len(expcod),block):
             rem = start + len(expcod) - xx
@@ -181,58 +178,41 @@ class nvm (object):
             for yy in range(len(rdat)):
                 mismatch += me.show_mismatch (yy+xx, rdat[yy], expcod[yy+xx-start], mismatch)
 
+        end = start+len(expcod)
         assert end==xx+rem, ('end address calc error', end, xx, rem)
 #       [addr_l,addr_h] = me.sfrri (me.sfr.OFS,2)
-#       assert (addr_h-0x80)*256+addr_l == end, \
+#       assert (addr_l+addr_h*256) & me.sfr.nvmmsk == end, \
 #              'SFR(DEC,OFS) error, 0x%02x%02x' % (addr_h,addr_l)
         me.sfrwx (me.sfr.DEC, [end>>8]) # clear ACK
         return mismatch
 
 
-    def nvm_prog_byte (me, adr, wlst, hiv=0):
-        """
-        program @adr those in list 'wlst' byte-by-byte
-        slowly write for PROG timing
-        # hiv=0 to emulate (won't switch VPP) and check
-        """
-        assert hiv>=0 and hiv<=1, 'invalid hiv'
-        me.nvmset (adr)
-        rlst = me.sfr.pre_prog (me, hiv)
-        for xx in range(len(wlst)):
-            me.sfrwx (me.sfr.NVMIO, [wlst[xx]])
-        me.sfr.pst_prog (me, rlst)
-        time.sleep(1) # wait for voltage revovery
-
-        dec = me.sfrrx (me.sfr.DEC, 1)[0]
-        me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
-
-
-    def nvm_prog_block (me, addr, wrcod, rawsz, hiv=0, block=256):
+    def nvm_prog_block (me, addr, wrcod, rawsz, block=256, hiv=0):
         """
         program the in-byte array 'wrcod' into NVM block-by-block
         SFR-by-CSP: limit block size by CSP buffer and dummy
         SFR-by-I2C: 100KHz write for PROG timing
+        byte-by-byte if block=1 (slowly write for PROG timing)
+        # hiv=0 to emulate (won't switch VPP) and check
         """
-        assert block > 0, 'block size must be positive'
+        assert hiv>=0 and hiv<=1, "invalid 'hiv', %d" % hiv
         me.nvmset (addr)
         rlst = me.sfr.pre_prog (me, hiv)
         start = time.time ()
-
         for xx in range(0, len(wrcod), block):
-            wcnt = block if xx+block <= len(wrcod) else len(wrcod)-xx
+            wcnt = block if xx+block < len(wrcod) else len(wrcod)-xx
             me.sfrwx (me.sfr.NVMIO, wrcod[xx:xx+wcnt])
 
         me.sfr.pst_prog (me, rlst)
+        print 'complete'
         print "%.1f sec" % (time.time () - start)
         time.sleep(1) # wait for voltage revovery
 
-        dec = me.sfrrx (me.sfr.DEC, 1)[0]
-        me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
-
-        ofs = me.sfrrx (me.sfr.OFS, 1)[0]
-        endadr = (ofs+dec*256) & me.sfr.nvmmsk
-        print ('ERROR: 0x%04x' % (endadr)) \
-        if endadr != (addr + rawsz) & me.sfr.nvmmsk else 'complete'
+        end = addr+rawsz
+#       [addr_l,addr_h] = me.sfrri (me.sfr.OFS,2)
+#       assert (addr_l+addr_h*256) & me.sfr.nvmmsk == end, \
+#              'SFR(DEC,OFS) error, 0x%02x%02x' % (addr_h,addr_l)
+        me.sfrwx (me.sfr.DEC, [end>>8]) # clear ACK
 
 
     def get_file (me, memfile):

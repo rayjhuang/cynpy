@@ -249,10 +249,6 @@ class atm (nvm):
         raise NotImplementedError()
 
 
-    def nvm_prog_raw_block (me, wrcod):
-        me.sfrwx (me.sfr.NVMIO, wrcod)
-
-
     def nvm_download (me, binfile):
         '''
         download NVM from the target (TST slave)

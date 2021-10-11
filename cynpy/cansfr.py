@@ -349,7 +349,7 @@ class sfr1112 (sfr111x):
         me.trimsz = 5 # bytes SFR
         me.trimsfr = 0xa2 # SFR start
         me.trimnum = 6 # entries MTT
-        me.trimtable = 0x940 # base address in OTP
+        me.trimtable = 0x940
 
     def get_sfr_name (me, adr, name=''):
         for k,v in list(vars(sfr1112).iteritems()):
@@ -367,13 +367,15 @@ class sfr1124 (sfr1112):
 
     def __init__ (me, revid=0):
         super(sfr1124,me).__init__ (revid)
+        me.nbyte = 1
         me.nvmsz = 0x4080
+        me.trimtable = 0x2000
 
     def pre_prog (me, tst, hiv=0):
         rlst = tst.sfrrx (me.NVMCTL,1) # save NVMCTL
         if hiv > 0: # hiv=0 to emulate
             tst.sfrwx (me.NVMCTL, [0x80]) # set VPP=V5V (VPP=VDD normally)
-        print 'Also provide VPP=4.0V on V5V for valid programming', hiv
+        print 'Provide VPP=4.0V on V5V for valid programming,', hiv
         return rlst
 
     def pst_prog (me, tst, rlst): # resume 5V

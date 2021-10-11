@@ -43,26 +43,28 @@ class tstcsp (can11xx, atm, cspnvm):
 
     def insert_dummy (me, rawcod, block):
         '''
-        load the memory file 'memfile' and insert dummys
+        insert dummy(s) between each rawcod
+        it's better block-sfr.nbyte is a multiple of sfr.nbyte+sfr.dummy
         '''
-        lowcod = [] # low-byte
+        lowcod = [] # low byte(s)
         wrcod = []
         for xx in rawcod:                
-            if len(lowcod)>0 or me.sfr.nbyte==1:
-                if len(wrcod)%block > 0:
-                    for yy in range(me.sfr.dummy):
+            if len(lowcod) < me.sfr.nbyte-1:
+                lowcod += [xx]
+            else:
+                # start the program at begin of a block do not need dummy
+                for ii in range(me.sfr.dummy):
+                    if len(wrcod)%block > 0:
                         wrcod += [0xdd]
                 wrcod += lowcod + [xx]
                 lowcod = []
-            else:
-                lowcod = [xx]
 
         return (len(rawcod), wrcod)
 
 
-    def calc_cspnvm_block (me):
+    def calc_csp_prog_block (me):
         """
-        calc. block length
+        calc the optimized block length
         """
         w_unit = (me.sfr.bufsz - me.sfr.nbyte - 2) \
                               / (me.sfr.nbyte + me.sfr.dummy) # CSP command needs 2 bytes
@@ -70,26 +72,16 @@ class tstcsp (can11xx, atm, cspnvm):
                + me.sfr.nbyte # optimize block size by CSP buffer
         return block
 
-        
-    def nvm_prog_raw_block (me, wrcod):
-        """
-        override atm's method
-        Single-Mode0-Write transaction
-        """
-        print wrcod
-        (rawsz, dmycod) = me.insert_dummy (wrcod, me.calc_cspnvm_block ())
-        print (rawsz, dmycod)
-        super(me.__class__, me).nvm_prog_raw_block (dmycod)
 
-
-    def nvm_prog_block (me, addr, wrcod, rawsz, hiv=0):
+    def nvm_prog_block (me, addr, wrcod, rawsz, block=0, hiv=0):
         """
         override atm's method
         insert dummy byte(s)
         """
-        block = me.calc_cspnvm_block ()
+        block = me.calc_csp_prog_block () if block==0 else block
+        assert block>0 and block<=me.sfr.bufsz, "invalid 'block', %d" % block
         (rawsz, dmycod) = me.insert_dummy (wrcod, block)
-        super(me.__class__, me).nvm_prog_block (addr, dmycod, rawsz, hiv, block)
+        super(me.__class__, me).nvm_prog_block (addr, dmycod, rawsz, block, hiv)
 
 
     def nvm_block_chk (me, start, expcod, block=32, mismatch=0):
