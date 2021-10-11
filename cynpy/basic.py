@@ -34,7 +34,9 @@ def no_argument ():
                 basic_path = '/'.join(__file__.replace('\\','/').split('/')[0:-1]) + '/basic.py'
                 print basic_path
                 for gg in open (basic_path,'r'):
-                    if gg.find ('line')<0 and gg.find ('sys.argv[')>=0 and gg.find (']==')>0:
+                    if gg.find ('line')<0 and gg.find ('sys.argv[')>=0 and \
+                               (gg.find (']==')>0 or \
+                                gg.find ('1].find')>0):
                         print gg,
 
         print 'ex:',
@@ -67,33 +69,25 @@ def tstmst_func (tstmst):
         if   len(sys.argv)==2  : tstmst.sfr_form (0x80,0x80)
         elif len(sys.argv)==3  : tstmst.sfr_form (argv_hex[2],0x10)
         else                   : tstmst.sfr_form (argv_hex[2],argv_hex[3])
-    elif sys.argv[1]=='nvm'    : # def nvm_form (me, ofs, cnt):
-        if   len(sys.argv)==2  : tstmst.nvm_form (0x900,0x80)
-        else:
-            if sys.argv[2]=='prog': tstmst.nvm_argv ('prog',argv_hex[4],sys.argv[5:],argv_hex[3])
-            elif len(sys.argv)==3 : tstmst.nvm_form (argv_hex[2],0x80)
-            else                  : tstmst.nvm_form (argv_hex[2],argv_hex[3])
+    elif sys.argv[1].find('nvm',0)==0: # def nvm_form (me, ofs, cnt):
+        if   sys.argv[1].find('prog',3)==3 \
+          or sys.argv[1].find('comp',3)==3 \
+          or len(sys.argv[1])>3 : tstmst.nvmargv (sys.argv[1:])
+        elif   len(sys.argv)==2 : tstmst.nvm_form (0x900,0x80)
+        else: # >2
+            if len(sys.argv)==3 : tstmst.nvm_form (argv_hex[2],0x80)
+            else                : tstmst.nvm_form (argv_hex[2],argv_hex[3])
 
     elif sys.argv[1]=='stop'   : print tstmst.sfrwx (0xBC,[8]) # stop MCU
     elif sys.argv[1]=='reset'  : print tstmst.sfrwx (0xF7,[1,1,1]) # reset MCU
 
     elif sys.argv[1]=='shift'  : tstmst.shift_osc (argv_dec[2])
     elif sys.argv[1]=='trim'   : tstmst.set_trim ()
-
     elif sys.argv[1]=='get_trim' : print ['0x%02x' % xx for xx in tstmst.get_trim ()]
 
-    elif sys.argv[1]=='prog_hex' : tstmst.nvm_prog (argv_hex[3],argv_hex[4:],argv_hex[2])
-    elif sys.argv[1]=='prog_asc' : tstmst.nvm_prog (argv_hex[3],map(ord,list(sys.argv[4])),argv_hex[2])
-    elif sys.argv[1]=='prog_str' : tstmst.nvm_prog_block ( \
-                                                    argv_hex[3],map(ord,list(sys.argv[4])),len(sys.argv[4]),argv_hex[2])
     elif sys.argv[1]=='prog_raw' : tstmst.nvm_prog_raw_block (argv_hex[2:] if len(sys.argv)>3 else \
                                                                 map(ord,list(sys.argv[2])))
     elif sys.argv[1]=='dnload' : tstmst.nvm_download (sys.argv[2])
-    elif sys.argv[1]=='upload' : # def nvm_upload_block (me, memfile, addr=0, hiv=0):
-        if   len(sys.argv)==3  : tstmst.nvm_upload_block (sys.argv[2])
-        elif len(sys.argv)==4  : tstmst.nvm_upload_block (sys.argv[2],argv_hex[3],argv_hex[4])
-        else                   : tstmst.nvm_upload_block (sys.argv[2],argv_hex[3],argv_hex[4],argv_hex[5])
     elif sys.argv[1]=='burst'  : tstmst.nvm_upload_burst (sys.argv[2],argv_hex[3])
-    elif sys.argv[1]=='comp'   : tstmst.nvm_compare (sys.argv[2:])
     elif sys.argv[1]=='test'   : tstmst.test (sys.argv[2:])
     else: print "command not recognized,", sys.argv[1]

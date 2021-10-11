@@ -6,15 +6,15 @@ class can11xx (object):
     can11xx hierarchy
     -----------------                                     canm0
                                                    {sfr  /
-                                                   updrpl - ams
-                                            {i2c  /            |
-            sfr1108                         cani2c - tsti2c   ~ isp
-           /                               /        /
-    sfr11xx - sfr111x - sfr1110  }  can11xx      atm 
-                     \                     \        \
-                      sfr1112                - - - - tstcsp   ~ csp
-                                                    /  {canm0
-                                              cspnvm
+                                                   updrpl - ams ~ ~
+                                            {i2c  /               |
+            sfr1108                         cani2c - - - tsti2c   ~ isp
+           /                               /            /
+    sfr11xx - sfr111x - sfr1110  }  can11xx    nvm - atm 
+                     \                     \            \
+                      sfr1112                - - - - - - tstcsp   ~ csp
+                                                        /  {canm0
+                                                  cspnvm
     '''
     def __init__ (me):
         me.sfr = sfr11xx() # initial
