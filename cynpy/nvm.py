@@ -95,18 +95,20 @@ class nvm (object):
         """
         blank= : blank check no/both/front/rear
         """
-        print 'check from 0x%04x to 0x%04x' % (param['start'],param['end']-1),
+        if not 'no_note' in param:
+            print 'check from 0x%04x to 0x%04x' % (param['start'],param['end']-1),
         start = time.time ()
         mismatch = 0
-        if 'blockr' in param and param['blockr']=='':
+        if not 'blockr' in param or param['blockr']=='':
             mismatch = me.nvm_block_chk (param['start'], param['data'])
         else:
-            block = int(param['blockr']) if 'blockr' in param else 1
+            block = int(param['blockr'])
             assert block>0, "invalid 'blockr', %d" % block
             mismatch = me.nvm_block_chk (param['start'], param['data'], block)
 
-        print ('\nmismatch: %s' % (mismatch)) if mismatch else 'complete'
-        print '%.1f sec' % (time.time () - start)
+        if not 'no_note' in param:
+            print ('\nmismatch: %s' % (mismatch)) if mismatch else 'complete'
+            print '%.1f sec' % (time.time () - start)
 
 
     def nvmprog (me, param):
@@ -115,18 +117,78 @@ class nvm (object):
         hiv=1 to byte-programming
         hiv=2 to byte-programming and check
         """
-        print 'program from 0x%04x to 0x%04x' % (param['start'],param['end']-1)
+        note = False if 'no_note' in param else True
+        print 'program from 0x%04x to 0x%04x' % (param['start'],param['end']-1),
         hiv = 0 if not 'hiv' in param else int(param['hiv'])
         assert hiv>=0 and hiv<=2, "invalid 'hiv', %d" % hiv
-        if 'blockw' in param and param['blockw']=='':
-            me.nvm_prog_block (param['start'], param['data'], len(param['data']), hiv=hiv>0)
+        if not 'blockw' in param or param['blockw']=='':
+            me.nvm_prog_block (param['start'], param['data'], len(param['data']), hiv=hiv>0, note=note)
         else:
-            block = int(param['blockw']) if 'blockw' in param else 1
+            block = int(param['blockw'])
             assert block>0, "invalid 'blockw', %d" % block
-            me.nvm_prog_block (param['start'], param['data'], len(param['data']), block, hiv>0)
+            me.nvm_prog_block (param['start'], param['data'], len(param['data']), block, hiv>0, note=note)
 
         if hiv==0 or hiv==2:
             me.nvmcomp (param)
+
+
+    def nvmsegm (me, param): # segmented prog/comp
+        """
+        segm=
+        intr=
+        wait=
+        """
+#       me.recognize (param, ['segm','wait'])
+        temp = param.copy()
+        temp['no_note'] = ''
+        segm = int(param['segm']) if 'segm' in param else 64
+        intr = int(param['intr']) if 'intr' in param else 0 # number of segment
+        wait = float(param['wait']) if 'wait' in param else 0
+        num = len(param['data']) / segm + (1 if \
+              len(param['data']) % segm else 0) # total segment number
+
+        ptr = 0 # select a segment to do
+        for ii in range(num):
+            if wait and ii:
+                print 'wait %.1f sec(s)' % wait
+                time.sleep (wait) # wait for NVM (ATTOP) cooldown
+
+            temp['data'] = []
+            addr = param['start'] + (ptr*segm)
+            for xx in range(segm):
+                if addr+xx < param['end']:
+                    temp['data'] += [param['data'][ptr*segm+xx]]
+
+            temp['start'] = addr
+            temp['end'] = addr + len(temp['data'])
+            print 'SEGM: %3d, %3d ---' % (ptr, len(temp['data'])),
+            me.nvmprog (temp)
+
+            if wait==0: print
+            ptr = ptr+(1+intr) if ptr+(1+intr) < num \
+                       else (ptr+1) % (1+intr) # wrap around
+
+
+    def nvmintr (me, param): # interleaved prog/comp
+        """
+        segm=
+        intr=
+        """
+        temp = param.copy()
+        temp['no_note'] = ''
+        segm = int(param['segm']) if 'segm' in param else 64
+        intr = int(param['intr']) if 'intr' in param else 0x2000
+        for ii in range(param['start'],param['end'],segm):
+            print 'SEGM: %3d ---' % ((ii-param['start'])/segm),
+            temp['data'] = []
+            for xx in range(segm):
+                if ii+xx < param['end']:
+                    temp['data'] += [param['data'][ii+xx-param['start']]]
+            num = (ii / segm) % (0x4000 / intr) # in range of 0x4000
+            temp['start'] = (ii + num*intr) % 0x4000
+            temp['end'] = temp['start'] + len(temp['data'])
+            me.nvmprog (temp)
+            print
 
 
     def nvmargv (me, argvlst):
@@ -147,6 +209,12 @@ class nvm (object):
         elif argvlst[0].find('comp',3)==3:
             me.nvmcomp (param)
 
+        elif argvlst[0].find('segm',3)==3: # segmented prog/comp
+            me.nvmsegm (param)
+
+        elif argvlst[0].find('intr',3)==3: # interleaved prog/comp
+            me.nvmintr (param)
+
         else:
             print "nvm command not recognized,", argvlst[0]
 
@@ -158,27 +226,28 @@ class nvm (object):
         """
         if dat != exp:
             if num == limit: print 'suppress further display...',
-            if num  < limit: print '\n0x%04X : %02X %c (!=%02X)' \
+            elif num < limit: print
+            if num  < limit: print '0x%04X : %02X %c (!=%02X)' \
                % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp),
             return 1
         else:
             return 0
 
         
-    def nvm_block_chk (me, start, expcod, block=256, mismatch=0):
+    def nvm_block_chk (me, addr, expcod, block=256, mismatch=0):
         """
         check block-by-block
         byte-by-byte if block=1
         """
-        me.nvmset (start)
-        for xx in range(start,start+len(expcod),block):
-            rem = start + len(expcod) - xx
+        me.nvmset (addr)
+        for xx in range(addr,addr+len(expcod),block):
+            rem = addr + len(expcod) - xx
             rcnt = block if rem >= block else rem
             rdat = me.nvmrx (rcnt)
             for yy in range(len(rdat)):
-                mismatch += me.show_mismatch (yy+xx, rdat[yy], expcod[yy+xx-start], mismatch)
+                mismatch += me.show_mismatch (yy+xx, rdat[yy], expcod[yy+xx-addr], mismatch)
 
-        end = start+len(expcod)
+        end = addr+len(expcod)
         assert end==xx+rem, ('end address calc error', end, xx, rem)
 #       [addr_l,addr_h] = me.sfrri (me.sfr.OFS,2)
 #       assert (addr_l+addr_h*256) & me.sfr.nvmmsk == end, \
@@ -187,7 +256,7 @@ class nvm (object):
         return mismatch
 
 
-    def nvm_prog_block (me, addr, wrcod, rawsz, block=256, hiv=0):
+    def nvm_prog_block (me, addr, wrcod, rawsz, block=256, hiv=0, note=True):
         """
         program the in-byte array 'wrcod' into NVM block-by-block
         SFR-by-CSP: limit block size by CSP buffer and dummy
@@ -197,16 +266,16 @@ class nvm (object):
         """
         assert hiv>=0 and hiv<=1, "invalid 'hiv', %d" % hiv
         me.nvmset (addr)
-        rlst = me.sfr.pre_prog (me, hiv)
+        rlst = me.sfr.pre_prog (me, hiv, note)
         start = time.time ()
         for xx in range(0, len(wrcod), block):
             wcnt = block if xx+block < len(wrcod) else len(wrcod)-xx
             me.sfrwx (me.sfr.NVMIO, wrcod[xx:xx+wcnt])
 
         me.sfr.pst_prog (me, rlst)
-        print 'complete'
-        print "%.1f sec" % (time.time () - start)
-        time.sleep(1) # wait for voltage revovery
+        if note:
+            print 'complete'
+            print "%.1f sec" % (time.time () - start)
 
         end = addr+rawsz
 #       [addr_l,addr_h] = me.sfrri (me.sfr.OFS,2)

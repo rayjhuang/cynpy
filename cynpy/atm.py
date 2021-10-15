@@ -262,7 +262,7 @@ class atm (nvm):
         start = time.time ()
         me.nvmset (0)
         for xx in range(0, me.sfr.nvmsz, block):
-            rcnt = block if xx+block <= me.sfr.nvmsz else me.sfr.nvmsz - xx
+            rcnt = block if xx+block < me.sfr.nvmsz else me.sfr.nvmsz - xx
             rdat = me.nvmrx (rcnt)
             dncode += ''.join(chr(e) for e in rdat)
             for yy in range(rcnt):
@@ -273,7 +273,7 @@ class atm (nvm):
         dec = me.sfrrx (me.sfr.DEC, 1)[0]
         me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
 
-        print len(dncode), 'bytes read'
+        print len(dncode), '(0x%04x) bytes read' % len(dncode)
         print lastcode+1, '(0x%04x) bytes written' % (lastcode+1)
 
         f = open(binfile,'wb')
@@ -286,19 +286,23 @@ class atm (nvm):
 
     def get_trim (me):
         '''
-        search the trim MTTable
+        search the trim table (a MTP table)
         get the newest entry
         '''
-        me.nvmset (me.sfr.trimtable)
+        me.nvmset (me.sfr.trimtable['addr'])
+        rdat = []
+        for ii in range(me.sfr.trimtable['width']):
+            rdat += me.nvmrx (me.sfr.trimtable['depth'])
+
         ret = [] # empty if not found
-        rdat = me.nvmrx (me.sfr.trimsz *me.sfr.trimnum)
-        for xx in range(me.sfr.trimnum):
+        for xx in range(me.sfr.trimtable['depth']):
             cnt_not_ff = 0
-            for yy in range(me.sfr.trimsz):
-                if rdat[xx*me.sfr.trimsz + yy] != 0xff:
+            for yy in range(me.sfr.trimtable['width']):
+                if rdat[xx*me.sfr.trimtable['width'] + yy] != 0xff:
                     cnt_not_ff += 1
             if cnt_not_ff == 0 and xx > 0: # found
-                ret = rdat[(xx-1)*me.sfr.trimsz : xx*me.sfr.trimsz]
+                ret = rdat[(xx-1)*me.sfr.trimtable['width'] \
+                             : xx*me.sfr.trimtable['width']]
                 break
 
         dec = me.sfrrx (me.sfr.DEC, 1)[0]
@@ -310,8 +314,9 @@ class atm (nvm):
         '''
         '''
         trimvec = me.get_trim ()
-        print ['0x%02x' % xx for xx in trimvec]
-        print me.sfrwi (me.sfr.trimsfr, trimvec)
+        print ['%02x' % xx for xx in trimvec]
+        for ii in range(len(me.sfr.trimsfr)):
+            print me.sfrwx (me.sfr.trimsfr[ii],trimvec[ii])
 
 
     def shift_osc (me, delta):

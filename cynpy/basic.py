@@ -72,6 +72,7 @@ def tstmst_func (tstmst):
     elif sys.argv[1].find('nvm',0)==0: # def nvm_form (me, ofs, cnt):
         if   sys.argv[1].find('prog',3)==3 \
           or sys.argv[1].find('comp',3)==3 \
+          or sys.argv[1].find('segm',3)==3 \
           or len(sys.argv[1])>3 : tstmst.nvmargv (sys.argv[1:])
         elif   len(sys.argv)==2 : tstmst.nvm_form (0x900,0x80)
         else: # >2
@@ -83,7 +84,7 @@ def tstmst_func (tstmst):
 
     elif sys.argv[1]=='shift'  : tstmst.shift_osc (argv_dec[2])
     elif sys.argv[1]=='trim'   : tstmst.set_trim ()
-    elif sys.argv[1]=='get_trim' : print ['0x%02x' % xx for xx in tstmst.get_trim ()]
+    elif sys.argv[1]=='get_trim' : print ['%02x' % xx for xx in tstmst.get_trim ()]
 
     elif sys.argv[1]=='prog_raw' : tstmst.nvm_prog_raw_block (argv_hex[2:] if len(sys.argv)>3 else \
                                                                 map(ord,list(sys.argv[2])))

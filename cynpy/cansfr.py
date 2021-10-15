@@ -133,10 +133,8 @@ class sfr1108 (sfr11xx):
         me.dummy = 3
         me.nvmsz = 0x0a00
         me.nvmmsk = 0x0fff # address width
-        me.trimsz = 2
-        me.trimsfr = 0xd2
-        me.trimnum = 8
-        me.trimtable = 0x970
+        me.trimsfr = [me.AOPTL,me.AOPTH]
+        me.trimtable = {'addr':0x970,'width':2,'depth':9}
 
         me.sfr_osc = me.AOPTH
 
@@ -154,10 +152,11 @@ class sfr1108 (sfr11xx):
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
 
-    def pre_prog (me, tst, hiv=0):
+    def pre_prog (me, tst, hiv=0, note=True):
         rlst = []
-        print 'Provide VPP(6.5V) on VC1 for valid programming'
-        print 'hiv does not matter', hiv
+        if note:
+            print 'Provide VPP(6.5V) on VC1 for valid programming'
+            print 'hiv does not matter', hiv
         return rlst
 
 
@@ -212,7 +211,7 @@ class sfr111x (sfr11xx):
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
 
-    def pre_prog (me, tst, hiv=0):
+    def pre_prog (me, tst, hiv=0, note=True):
         rlst = \
             tst.sfrrx (me.PWR_V,1) + \
             tst.sfrrx (me.SRCCTL,1) # save PWR_V
@@ -253,6 +252,7 @@ class sfr111x (sfr11xx):
 #       print 'V'
 #################################################################################
 ###     so just delay
+        time.sleep(1) # wait for voltage revovery
 
 
 
@@ -297,10 +297,8 @@ class sfr1110 (sfr111x):
         me.dummy = 3
         me.nvmsz = 0x2000
         me.nvmmsk = 0x1fff # address width
-        me.trimsz = 5
-        me.trimsfr = 0xe9
-        me.trimnum = 6
-        me.trimtable = 0x940
+        me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3,me.REGTRM4]
+        me.trimtable = {'addr':0x940,'width':5,'depth':6}
 
     def get_sfr_name (me, adr, name=''):
         for k,v in list(vars(sfr1110).iteritems()):
@@ -346,10 +344,6 @@ class sfr1112 (sfr111x):
         me.dummy = 2
         me.nvmsz = 0x4200
         me.nvmmsk = 0x7fff # address width
-        me.trimsz = 5 # bytes SFR
-        me.trimsfr = 0xa2 # SFR start
-        me.trimnum = 6 # entries MTT
-        me.trimtable = 0x940
 
     def get_sfr_name (me, adr, name=''):
         for k,v in list(vars(sfr1112).iteritems()):
@@ -361,6 +355,14 @@ class sfr1112 (sfr111x):
 
 class sfr1124 (sfr1112):
 
+    CVOFS01 = 0x84
+    CVOFS23 = 0x85
+
+    ADOFS   = 0x90
+    ISOFS   = 0x91
+
+    CCOFS   = 0xab
+
     NVMCTL  = 0x12 # CAN1124
 
     dict_id = {0x2e:'CAN1124A0'}
@@ -369,13 +371,17 @@ class sfr1124 (sfr1112):
         super(sfr1124,me).__init__ (revid)
         me.nbyte = 1
         me.nvmsz = 0x4080
-        me.trimtable = 0x2000
+        me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3,me.REGTRM4, \
+                      me.CCOFS,me.ADOFS,me.ISOFS]
+        me.trimtable = {'addr':0x2000,'width':16,'depth':6}
 
-    def pre_prog (me, tst, hiv=0):
+    def pre_prog (me, tst, hiv=0, note=True):
         rlst = tst.sfrrx (me.NVMCTL,1) # save NVMCTL
         if hiv > 0: # hiv=0 to emulate
             tst.sfrwx (me.NVMCTL, [0x80]) # set VPP=V5V (VPP=VDD normally)
-        print 'Provide VPP=4.0V on V5V for valid programming,', hiv
+
+        if note:
+            print 'Provide VPP=4.0V on V5V for valid programming,', hiv
         return rlst
 
     def pst_prog (me, tst, rlst): # resume 5V

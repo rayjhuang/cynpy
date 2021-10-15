@@ -73,7 +73,7 @@ class tstcsp (can11xx, atm, cspnvm):
         return block
 
 
-    def nvm_prog_block (me, addr, wrcod, rawsz, block=0, hiv=0):
+    def nvm_prog_block (me, addr, wrcod, rawsz, block=0, hiv=0, note=True):
         """
         override atm's method
         insert dummy byte(s)
@@ -81,7 +81,7 @@ class tstcsp (can11xx, atm, cspnvm):
         block = me.calc_csp_prog_block () if block==0 else block
         assert block>0 and block<=me.sfr.bufsz, "invalid 'block', %d" % block
         (rawsz, dmycod) = me.insert_dummy (wrcod, block)
-        super(me.__class__, me).nvm_prog_block (addr, dmycod, rawsz, block, hiv)
+        super(me.__class__, me).nvm_prog_block (addr, dmycod, rawsz, block, hiv, note)
 
 
     def nvm_block_chk (me, start, expcod, block=32, mismatch=0):
