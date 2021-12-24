@@ -34,9 +34,7 @@ def no_argument ():
                 basic_path = '/'.join(__file__.replace('\\','/').split('/')[0:-1]) + '/basic.py'
                 print basic_path
                 for gg in open (basic_path,'r'):
-                    if gg.find ('line')<0 and gg.find ('sys.argv[')>=0 and \
-                               (gg.find (']==')>0 or \
-                                gg.find ('1].find')>0):
+                    if gg.find ('line')<0 and gg.find ('sys.argv[1]')>=0:
                         print gg,
 
         print 'ex:',
@@ -48,7 +46,7 @@ def no_argument ():
 
 
 def tstmst_func (tstmst):
-    if   sys.argv[1]=='rev'    : print tstmst.sfr.name
+    if   sys.argv[1]=='rev'    : print "\n".join("{!r}:{!r}".format(j,k) for j,k in vars(tstmst.sfr).items())
     elif sys.argv[1]=='sfr'    : print tstmst.sfr.query_sfr (argv_hex[2])
     elif sys.argv[1]=='adc'    : print tstmst.get_adc10 (argv_hex[2])
     elif sys.argv[1]=='read'   : print '0x%02x' % tstmst.sfrrx (argv_hex[2],1)[0]

@@ -71,8 +71,8 @@ class cspnvm (object):
 
         print "%.1f sec" % (time.time () - start)
         me.pst_prog_1110 (rlst)
-        ofs = me.sfrrx (me.sfr.OFS, 1)[0]
-        dec = me.sfrrx (me.sfr.DEC, 1)[0]
+        ofs = me.sfrrx (me.sfr.OFS,1)[0]
+        dec = me.sfrrx (me.sfr.DEC,1)[0]
         endadr = (ofs+dec*256) & me.sfr.nvmmsk
         me.sfrwx (me.sfr.DEC, [endadr>>8]) # clear ACK
 

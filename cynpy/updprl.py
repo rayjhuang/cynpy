@@ -5,7 +5,7 @@ class updprl (cani2c):
     '''
     base class of ams and canm0
     '''
-    OrdrsType = ['SOP','SOP\'','SOP"','SOP\'_Debug','SOP"_Debug','Hard Reset','Cable Reset']
+    OrdrsType = ['NA','SOP','SOP\'','SOP"','SOP\'_Debug','SOP"_Debug','Hard Reset','Cable Reset']
     CtrlMsg = ['Rsvd0','GoodCRC','GotoMin','Accept','Reject','Ping','PS_RDY','Get_Source_Cap', \
                'Get_Sink_Cap','DR_Swap','PR_Swap','VCONN_Swap','Wait','Soft_Reset','Rsvd14','Rsvd15']
     DataMsg = ['Rsvd0','Source_Capabilities','Request','BIST','Sink_Capabilities','Battery_Status','Alert','Get_Country_Info', \
@@ -93,7 +93,7 @@ class updprl (cani2c):
             for xx in range(20): # wait for something rcvd in a period of time
                 if sta0 & 0xfc: break;
                 sta0 = me.sfrrx (me.sfr.STA0,1)[0]
-            if sta0 == 0x00: ret = 'no GoodCRC response, '+ me.OrdrsType[me.TxOrdrs-1]
+            if sta0 == 0x00: ret = 'no GoodCRC response, '+ me.OrdrsType[me.TxOrdrs]
             elif (sta0 & 0x40): # GoodCRC rcvd
                 me.MyMsgId += 1
                 me.MyMsgId &= 7

@@ -260,7 +260,7 @@ class nvm (object):
         """
         program the in-byte array 'wrcod' into NVM block-by-block
         SFR-by-CSP: limit block size by CSP buffer and dummy
-        SFR-by-I2C: 100KHz write for PROG timing
+        SFR-by-I2C: 100KHz or lower write for PROG timing
         byte-by-byte if block=1 (slowly write for PROG timing)
         # hiv=0 to emulate (won't switch VPP) and check
         """

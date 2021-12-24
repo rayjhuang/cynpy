@@ -116,7 +116,12 @@ class ams (updprl):
             me.Vconn = 1 - me.Vconn # swap
 
 
-    def ams_attention (me):
+    def ams_vdm_discover_id (me):
+        me.upd_tx (15,[0xff008001]) # SVDM (Discover Id)
+        (ndo,mtyp,do) = me.upd_rx (quick=1)
+
+
+    def ams_vdm_attention (me):
         if (me.AttentionCmd&0xff) == 0x10: # checksum
             me.upd_tx (15,[0x2a418006,me.AttentionCmd]) # SVDM (Attention)
             (ndo,mtyp,do) = me.upd_rx (quick=1)
@@ -156,8 +161,10 @@ class ams (updprl):
         elif me.kb == ord('r'): me.ams_goto_rx (1) # Hard Reset
         elif me.kb == ord('g'): me.ams_get_source_cap () # Get_Source_Cap
         elif me.kb == ord('d'): me.ams_dr_swap () # DR_Swap
-        elif me.kb == ord('v'): me.ams_vconn_swap () # VCONN_Swap
-        elif me.kb == ord('a'): me.ams_attention () # Attention
+        elif me.kb == ord('V'): me.ams_vconn_swap () # VCONN_Swap
+        elif me.kb == ord('v'): me.ams_vdm_discover_id () # DiscoverId(VDM)
+        elif me.kb == ord('a'): me.ams_vdm_attention () # Attention(VDM)
+        elif me.kb == ord('p'): me.upd_tx (5) # Ping
 
         elif me.kb >= ord('1') and me.kb <= ord('7'): # Request
             me.PosMinus = (me.kb - ord('1')) & 0x07
@@ -192,7 +199,7 @@ class ams (updprl):
                 
         elif ndo == 0: # control message
             if mtyp < 0: # Hard/Cable Reset
-                print 'RX -', me.OrdrsType[mtyp+7]
+                print 'RX -', me.OrdrsType[mtyp+8]
 
         else: # 'q' pressed
             me.mode = 2 if me.mode == 0 else 3
@@ -224,6 +231,7 @@ class ams (updprl):
                 print 'PDO'+chr(me.kb), 'is to be requested' # this 'kb' will effect the next Nego
             elif me.kb == ord('q'):
                 ndo = -1
+                print '...'
                 break
 
             elif me.kb == ord('h'):
@@ -275,6 +283,10 @@ class ams (updprl):
             if   me.kb == ord(' '): # toogle PD2/3
                 me.SpecRev = 3 - me.SpecRev
                 print '[PD%d0]' % (me.SpecRev + 1)
+
+            elif me.kb == ord('\x08'):
+                me.TxOrdrs = me.TxOrdrs + 1 if me.TxOrdrs<5 else 1
+                print '[TX/%s]' % (me.OrdrsType[me.TxOrdrs])
 
             elif me.kb == ord('h'):
                 me.help ()
@@ -336,13 +348,16 @@ class ams (updprl):
         \rin [AMS_TX] or [AMS_PPS]
         \r(1-key command)
         \r    '1'-'7' : request the PDO
-        \r    'a'     : SVDM (Attention)
-        \r    'v'     : VCONN_Swap
+        \r    'p'     : Ping
+        \r    'a'     : Attention(VDM)
+        \r    'v'     : Discvoer_Id(VDM)
+        \r    'V'     : VCONN_Swap
         \r    'd'     : DR_Swap
         \r    'r'     : Hard Reset
         \r    'q'     : go AMS_RX
         \r    |ESC|   : exit
         \r    |SPACE| : switch PD2/PD3
+        \r    |BSPACE|: switch SOP*
         \r    'h'     : show this message
         \r(specifying command, ended by |RETURN|)
         \r    '?'     : Attention command

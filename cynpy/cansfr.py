@@ -113,6 +113,13 @@ class sfr11xx (object):
             if adr < 0 and k == name: return '0x%02X' % v
         return '' # not found
 
+    def pre_prog (me, tst, hiv=0, note=True):
+        rlst = []
+        return rlst
+
+    def pst_prog (me, tst, rlst):
+        pass
+
 
 
 class sfr1108 (sfr11xx):
@@ -133,6 +140,7 @@ class sfr1108 (sfr11xx):
         me.dummy = 3
         me.nvmsz = 0x0a00
         me.nvmmsk = 0x0fff # address width
+        me.trimmsk = [0x03,0xe0] # only 11 bits valid
         me.trimsfr = [me.AOPTL,me.AOPTH]
         me.trimtable = {'addr':0x970,'width':2,'depth':9}
 
@@ -152,11 +160,12 @@ class sfr1108 (sfr11xx):
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
 
-    def pre_prog (me, tst, hiv=0, note=True):
+    def pre_prog (me, tst, hiv=False, note=True):
         rlst = []
         if note:
-            print 'Provide VPP(6.5V) on VC1 for valid programming'
-            print 'hiv does not matter', hiv
+            print
+            print 'Provide VPP(6.5V) on VC1 for effective programming'
+            print 'VPP is FSM-switching, hiv =',hiv,'does not matter'
         return rlst
 
 
@@ -211,7 +220,7 @@ class sfr111x (sfr11xx):
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
 
-    def pre_prog (me, tst, hiv=0, note=True):
+    def pre_prog (me, tst, hiv=False, note=True):
         rlst = \
             tst.sfrrx (me.PWR_V,1) + \
             tst.sfrrx (me.SRCCTL,1) # save PWR_V
@@ -220,7 +229,7 @@ class sfr111x (sfr11xx):
             if rlst[0] & 0xc0:
                 print 'both Rp is to be turned off'
                 tst.sfrwx (me.CCCTL, [rlst[2] & 0x3f]) # RP?_EN=0
-        if hiv > 0: # hiv=0 to emulate
+        if hiv: # hiv=False to emulate
             tst.sfrwx (me.PWR_V, [120]) # set VIN=9.6V
 
         print 'adj-VIN:',
@@ -375,13 +384,15 @@ class sfr1124 (sfr1112):
                       me.CCOFS,me.ADOFS,me.ISOFS]
         me.trimtable = {'addr':0x2000,'width':16,'depth':6}
 
-    def pre_prog (me, tst, hiv=0, note=True):
+    def pre_prog (me, tst, hiv=False, note=True):
         rlst = tst.sfrrx (me.NVMCTL,1) # save NVMCTL
-        if hiv > 0: # hiv=0 to emulate
+        if hiv: # hiv=False to emulate
             tst.sfrwx (me.NVMCTL, [0x80]) # set VPP=V5V (VPP=VDD normally)
 
         if note:
-            print 'Provide VPP=4.0V on V5V for valid programming,', hiv
+            print
+            print 'Provide VPP=4.0V on V5V for effective programming'
+            print 'VPP SFR-switching, hiv =', hiv
         return rlst
 
     def pst_prog (me, tst, rlst): # resume 5V

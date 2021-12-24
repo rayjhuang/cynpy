@@ -21,15 +21,14 @@ class aardvark:
             else:
                 print 'Unable to open Aardvark device on port %d' % (p)
                 print 'Error code = %d' % (me.handle)
-        elif number > 0:
-            print 'port', p, 'not found'
         else:
-            print 'no AARDVARK port found'
+            print ('open: port', p, 'not found') if number > 0 \
+             else ('open: no AARDVARK port found')
 
     def enum (me, rpt=FALSE):
         (number, ports, unique_ids) = aa_find_devices_ext(16, 16)
         if rpt:
-            print number, 'AARDVARK', 'ports' if number>1 else 'port', 'found'
+            print 'enum:', number, 'AARDVARK', 'ports' if number>1 else 'port', 'found'
             for xx in ports:
                 print 'port %d' % (xx & ~AA_PORT_NOT_FREE),
                 if xx & AA_PORT_NOT_FREE:
@@ -110,11 +109,20 @@ class aardvark_i2c (aardvark, i2c):
         return r_dat.tolist()
 
     def i2cw (me, wdat): # I2C write
-        if not me.handle > 0: return 0 # no AARDVARK device opened'
+        """
+        return value:
+            0: AA_OK
+            3: slave send NACK
+            6: slave not powered
+           -9: AA_INVALID_HANDLE
+        """
+#       if not me.handle > 0: return 0 # no AARDVARK device opened'
         assert len(wdat) > 0, 'empty write data is not valid'
-        if len(wdat) == 1:
-            wdat += [0]
-        return aa_i2c_write (me.handle, wdat[0], AA_I2C_NO_FLAGS, array('B',wdat[1:]))
+#       if len(wdat) == 1:
+#           wdat += [0]
+        status = aa_i2c_write_ext (me.handle, wdat[0], AA_I2C_NO_FLAGS, array('B',wdat[1:]))
+        if status < 0: print aa_status_string (status[0])
+        return status
 
 
 class aardvark_spi (aardvark):

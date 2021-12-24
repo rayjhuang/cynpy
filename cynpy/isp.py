@@ -16,7 +16,11 @@ if __name__ == '__main__':
                 import cynpy.KBHit as KBHit
                 kb = KBHit.KBHit ()
                 def check_kb ():
-                    return ord(kb.getch() if kb.kbhit() else '\x00')
+                    try:
+                        return ord(kb.getch() if kb.kbhit() else '\x00')
+                    except:
+                        print 'key unknown'
+
                 import cynpy.ams as ams
                 tstmst = ams.ams(i2cmst, 0x70, check_kb, time.sleep, 1)
                 '''
@@ -24,6 +28,7 @@ if __name__ == '__main__':
                 recover auto-TX/RX-GoodCRC setting
                 '''
                 tstmst.prltx.msk (0xff, 0x88) # enable auto-TX/RX-GoodCRC
+                print '[TX/%s]' % (tstmst.OrdrsType[tstmst.TxOrdrs])
                 print '[AMS_RX]'
                 while tstmst.main_loop () != 27:
                     pass

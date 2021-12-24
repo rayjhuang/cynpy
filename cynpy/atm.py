@@ -85,8 +85,6 @@ class atm (nvm):
         print me.sfrrx
         print 'looped read (avg=%d), press any key.....' % n_avg
         cnt = 0
-        r_min = 0xff
-        r_max = 0
         r_avg = [0] * n_avg
         while 1:
             print "\r0x%02x(%03d):" % (adr,cnt),
@@ -94,23 +92,18 @@ class atm (nvm):
                 r_dat = me.sfrrx (adr,1)[0]
                 r_avg.pop()
                 r_avg.insert(0,r_dat)
+#               r_cnt = [0] * 256
                 r_sum = 0
-                r_cnt = [0] * 256
+                r_min = 0xff
+                r_max = 0
                 for i in range(n_avg):
                     r_sum += r_avg[i]
-                    r_cnt[r_avg[i]] += 1
+                    if r_dat<r_min: r_min = r_dat
+                    if r_dat>r_max: r_max = r_dat
+#                   r_cnt[r_avg[i]] += 1
 #               print r_avg,
-#               if r_dat<r_min: r_min = r_dat
-#               if r_dat>r_max: r_max = r_dat
 #               print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
-#               print "%3d %3d %3d" % (r_min,r_sum/n_avg,r_max),
-                average = (r_sum+n_avg/2)/n_avg
-                print "avg:%3d " % (average),
-                r_start = (average-3)/5*5
-                r_stop = r_start + 11
-                if r_stop>256: r_stop=256
-#               for i in range(r_start,r_stop):
-#                   print "%3d:%2d " % (i,r_cnt[i]),
+                print "%3d %3d %3d" % (r_min,r_sum/n_avg,r_max),
                 cnt += 1
             except:
                 print "--",
@@ -316,7 +309,7 @@ class atm (nvm):
         trimvec = me.get_trim ()
         print ['%02x' % xx for xx in trimvec]
         for ii in range(len(me.sfr.trimsfr)):
-            print me.sfrwx (me.sfr.trimsfr[ii],trimvec[ii])
+            print me.sfrwx (me.sfr.trimsfr[ii],[trimvec[ii]])
 
 
     def shift_osc (me, delta):

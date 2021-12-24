@@ -41,7 +41,7 @@ class canm0 (updprl):
             me.TxOrdrs = xx
             ret = me.csp_prefix ([0x00,0x01]) # no-data CSP write
             if rpt:
-                print me.OrdrsType[xx-1],
+                print me.OrdrsType[xx],
                 if ret == '':
                     print 'responded'
                 else:
