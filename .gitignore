@@ -2,3 +2,4 @@ build
 cynpy.egg-info
 dist
 /cynpy/*.pyc
+/*.bin

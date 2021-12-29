@@ -9,10 +9,10 @@ if __name__ == '__main__':
     i2cmst = i2c.choose_master ()
 
     import sys
-    import cynpy.basic as cmd
+    import basic as cmd
     if not cmd.no_argument ():
         if i2cmst:
-            import cynpy.canm0 as canm0
+            import canm0
             if sys.argv[1]=='q' or \
                sys.argv[1]=='query' : # query SOP*
                 cspbdg = canm0.canm0(i2cmst, 0x70) # no SOP*

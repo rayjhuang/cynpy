@@ -9,11 +9,11 @@ if __name__ == '__main__':
     i2cmst = i2c.choose_master ()
 
     import sys, time
-    import cynpy.basic as cmd
+    import basic as cmd
     if not cmd.no_argument ():
         if i2cmst:
             if sys.argv[1]=='ams':
-                import cynpy.KBHit as KBHit
+                import KBHit
                 kb = KBHit.KBHit ()
                 def check_kb ():
                     try:
@@ -21,7 +21,7 @@ if __name__ == '__main__':
                     except:
                         print 'key unknown'
 
-                import cynpy.ams as ams
+                import ams
                 tstmst = ams.ams(i2cmst, 0x70, check_kb, time.sleep, 1)
                 '''
                 enable auto-TX/RX-GoodCRC

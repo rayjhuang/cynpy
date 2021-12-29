@@ -1,13 +1,13 @@
 
-from cynpy.can11xx import cani2c
-from cynpy.atm import atm
+from can11xx import cani2c
+from atm import atm
 
 class tsti2c (cani2c, atm):
     pass
 
 
 
-from cynpy.can11xx import can11xx
+from can11xx import can11xx
 from cspnvm import *
 
 class tstcsp (can11xx, atm, cspnvm):
