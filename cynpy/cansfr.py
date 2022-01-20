@@ -137,7 +137,7 @@ class sfr1108 (sfr11xx):
         super(sfr1108,me).__init__ (revid)
         me.inc = 1 # CAN1108 power-on I2CSLV in INC mode
         me.nbyte = 2
-        me.dummy = 3
+        me.dummy = 4
         me.nvmsz = 0x0a00
         me.nvmmsk = 0x0fff # address width
         me.trimmsk = [0x03,0xe0] # only 11 bits valid
@@ -374,7 +374,8 @@ class sfr1124 (sfr1112):
 
     NVMCTL  = 0x12 # CAN1124
 
-    dict_id = {0x2e:'CAN1124A0'}
+    dict_id = {0x2e:'CAN1124A0', \
+               0x2f:'CAN1124B0'}
 
     def __init__ (me, revid=0):
         super(sfr1124,me).__init__ (revid)
