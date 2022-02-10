@@ -42,7 +42,7 @@ class ams (updprl):
                                           + (':' if len(do) > 0 else '')
         for yy in range(len(do)): # NDO
             msg += ' %08X' % do[yy]
-        print '%s (%s)' % (msg, me.DataMsg[cmd] if len(do) > 0 else me.CtrlMsg[cmd])
+        print('%s (%s)' % (msg, me.DataMsg[cmd] if len(do) > 0 else me.CtrlMsg[cmd]))
 
 
     def ams_request (me):
@@ -67,7 +67,7 @@ class ams (updprl):
                 opc = ((me.OprCurrent / 10) if me.OprCurrent > 0 else me.RcvdPdo[me.PosMinus]) & 0x3ff
                 mxc = ((me.MaxCurrent / 10) if me.MaxCurrent > 0 else me.RcvdPdo[me.PosMinus]) & 0x3ff
         else:
-            print 'not yet PDO received, all fixed PDO assumed'
+            print('not yet PDO received, all fixed PDO assumed')
             opc = (me.OprCurrent / 10) & 0x3ff
             mxc = (me.MaxCurrent / 10) & 0x3ff
 
@@ -81,10 +81,10 @@ class ams (updprl):
 
         if   me.mode == 2 and ret == (TRUE,TRUE): # APDO accepted
             me.mode = 3
-            print '[AMS_PPS]'
+            print('[AMS_PPS]')
         elif me.mode == 3 and ret == (FALSE,TRUE): # non-APDO accepted
             me.mode = 2
-            print '[AMS_TX]'
+            print('[AMS_TX]')
 
 
     def ams_get_source_cap (me):
@@ -128,10 +128,10 @@ class ams (updprl):
             me.upd_tx (15,[0x2a410010]) # UVDM
         elif (me.AttentionCmd&0xff) == 0x02: # program
             me.upd_tx (15,[0x2a418006,me.AttentionCmd]) # SVDM (Attention)
-            print 'MCU stopped, DATEX table', (me.AttentionCmd>>8)&0x3, \
-                  'is ready for programming'
+            print('MCU stopped, DATEX table', (me.AttentionCmd>>8)&0x3, \
+                  'is ready for programming')
         else:
-            print 'Attention command ', me.AttentionCmd, ' not supported'
+            print('Attention command', me.AttentionCmd, 'not supported')
             
 
     def ams_goto_rx (me, cmd=0):
@@ -141,7 +141,7 @@ class ams (updprl):
         '''
         if cmd == 1: me.ordered_set (1) # Hard Reset
         me.mode = 0 if me.mode==2 else 1
-        print '[AMS_RX]'
+        print('[AMS_RX]')
 
 
     def pps_timer (me):
@@ -184,7 +184,7 @@ class ams (updprl):
 
             elif me.kb == ord('/'): # switch SinkPPSPeriodTimer
                 me.ppstime = 0 if me.ppstime < 0 else -1
-                print 'switch SinkPPSPeriodTimer', 'ON' if me.ppstime == 0 else 'OFF'
+                print('switch SinkPPSPeriodTimer', 'ON' if me.ppstime == 0 else 'OFF')
 
 
     def ams_rx (me):
@@ -199,11 +199,11 @@ class ams (updprl):
                 
         elif ndo == 0: # control message
             if mtyp < 0: # Hard/Cable Reset
-                print 'RX -', me.OrdrsType[mtyp+8]
+                print('RX -', me.OrdrsType[mtyp+8])
 
         else: # 'q' pressed
             me.mode = 2 if me.mode == 0 else 3
-            print '[AMS_TX]' if me.mode == 2 else '[AMS_PPS]'
+            print('[AMS_TX]' if me.mode == 2 else '[AMS_PPS]')
 
 
     def upd_rx (me, quick=0):
@@ -228,10 +228,10 @@ class ams (updprl):
             me.kb = me.check_kb_func ()
             if me.kb >= ord('1') and me.kb <= ord('7'):
                 me.PosMinus = (me.kb - ord('1')) & 0x07
-                print 'PDO'+chr(me.kb), 'is to be requested' # this 'kb' will effect the next Nego
+                print('PDO'+chr(me.kb), 'is to be requested') # this 'kb' will effect the next Nego
             elif me.kb == ord('q'):
                 ndo = -1
-                print '...'
+                print('...')
                 break
 
             elif me.kb == ord('h'):
@@ -255,7 +255,7 @@ class ams (updprl):
                     for xx in range(4):
                         do[yy] += rdat[yy*4+2+xx]*(256**xx)
                     msg += ' %08X' % do[yy]
-                print msg
+                print(msg)
 
             else: # Hard/Cable Reset rcvd
                 prls = me.sfrrx (me.sfr.PRLS,1)[0] & 0x70
@@ -264,7 +264,7 @@ class ams (updprl):
                 else:
                     raise NameError('not recognized ordered set')
 
-#       print msg, quick, ndo, '%02x %02x' % (sta0,sta1)
+#       print(msg, quick, ndo, '%02x %02x' % (sta0,sta1))
         me.prltx.pop () # recover PRLTX settings
         return (ndo,mtyp,do)
 
@@ -282,11 +282,11 @@ class ams (updprl):
             
             if   me.kb == ord(' '): # toogle PD2/3
                 me.SpecRev = 3 - me.SpecRev
-                print '[PD%d0]' % (me.SpecRev + 1)
+                print('[PD%d0]' % (me.SpecRev + 1))
 
             elif me.kb == ord('\x08'):
                 me.TxOrdrs = me.TxOrdrs + 1 if me.TxOrdrs<5 else 1
-                print '[TX/%s]' % (me.OrdrsType[me.TxOrdrs])
+                print('[TX/%s]' % (me.OrdrsType[me.TxOrdrs]))
 
             elif me.kb == ord('h'):
                 me.help ()
@@ -296,7 +296,7 @@ class ams (updprl):
                  me.kb == ord('<') or \
                  me.kb == ord('?'): # go string specifying mode
                 me.str = chr(me.kb)
-                print me.str, '\x0D',
+                print(me.str,'\x0D',end='') # CR
 
         else: # string specifying mode
             if me.kb == 13: # press 'enter' to exec 'me.str'
@@ -320,17 +320,17 @@ class ams (updprl):
                     if tar.isdigit():
                         me.AttentionCmd = int(tar)
                         me.str += ' Attention command specified'
-                print me.str
+                print(me.str)
                 me.str = '' # reset 'me.str'
             elif me.kb > ord(' '):
                 me.str += chr(me.kb)
-                print me.str, '\x0D',
+                print(me.str,'\x0D',end='') #  CR
 
         return me.kb
 
 
     def help (me):
-        print '''\
+        print('''\
         \rInstructions.....
         \r----------------------------------
         \rMODE  [AMS_RX]
@@ -365,4 +365,4 @@ class ams (updprl):
         \r    '='     : target voltage (PPS)
         \r    '>'     : operating current (fixed/PPS)
         \r    '<'     : max. current (fixed)
-        '''
+        ''')

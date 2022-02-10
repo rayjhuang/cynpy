@@ -20,7 +20,7 @@ class cspnvm (object):
         for yy in range(4): # show OTP header
             for xx in me.busmst.sfrrx (me.busmst.sfr.NVMIO,16):
                 sys.stdout.write ('%c' % xx)
-            print
+            print()
 
         me.busmst.sfrwx (me.busmst.sfr.DEC,   [0])
 #       me.busmst.sfrwx (me.busmst.sfr.MISC,  [0x02]) # tell bridge to plus 1 dummy
@@ -42,7 +42,7 @@ class cspnvm (object):
             if rsp != 0: # something happened
                 break
         if rsp != 1:
-            print 'WRITER_ERROR: %d, %x' % (xx, rsp)
+            print('WRITER_ERROR: %d, %x' % (xx, rsp))
         return rsp
 
 
@@ -63,17 +63,17 @@ class cspnvm (object):
             cmd = 2 # continue the burst
             pg0 = 1 - pg0
 
-        print 'FFSTA:0x%02x' % me.busmst.sfrrx (me.busmst.sfr.FFSTA,1)[0]
+        print('FFSTA:0x%02x' % me.busmst.sfrrx (me.busmst.sfr.FFSTA,1)[0])
         for xx in range(1000):
             if (me.busmst.sfrrx (me.busmst.sfr.STA1,1)[0] & 0x01):
-                print 'polling:', xx
+                print('polling:', xx)
                 break
 
-        print "%.1f sec" % (time.time () - start)
+        print("%.1f sec" % (time.time () - start))
         me.pst_prog_1110 (rlst)
-        ofs = me.sfrrx (me.sfr.OFS,1)[0]
-        dec = me.sfrrx (me.sfr.DEC,1)[0]
+        ofs = me.sfrrx (me.sfr.OFS, 1)[0]
+        dec = me.sfrrx (me.sfr.DEC, 1)[0]
         endadr = (ofs+dec*256) & me.sfr.nvmmsk
         me.sfrwx (me.sfr.DEC, [endadr>>8]) # clear ACK
 
-        print ('ERROR: 0x%04x' % (endadr)) if endadr != len(wrcod) else 'complete'
+        print(('ERROR: 0x%04x' % (endadr)) if endadr != len(wrcod) else 'complete')

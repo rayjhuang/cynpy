@@ -16,7 +16,7 @@ class tstcsp (can11xx, atm, cspnvm):
         super(me.__class__, me).__init__ () # SFR target
 
         if me.sfr.revid and rpt:
-            print 'CSP master finds target %s, %d' % (me.sfr.name, me.busmst.TxOrdrs)
+            print('CSP master finds target %s, %d' % (me.sfr.name, me.busmst.TxOrdrs))
 
 
     def is_master_rdy (me):

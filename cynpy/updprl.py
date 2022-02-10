@@ -46,8 +46,8 @@ class updprl (cani2c):
         me.sfrwx (me.sfr.FFCTL,[0x82]) # last, 2-byte K-code
         me.sfrwx (me.sfr.FFIO, [ordrs[1]])
         sta1 = me.sfrrx (me.sfr.STA1,1)[0]
-        if (sta1&0x30)==0x10: print 'ORDRS = %s' % ('CableReset','HardReset')[hr]
-        else:                 print "--- DISCARDED ---, %02X"%sta1
+        if (sta1&0x30)==0x10: print('ORDRS = %s' % ('CableReset','HardReset')[hr])
+        else:                 print("--- DISCARDED ---, %02X"%sta1)
         me.txctl.pop()
 
 
@@ -127,13 +127,13 @@ class sfr (object):
         SO THIS RECOVERY FUNCTION DOESN'T WORK YET
         '''
 #       me.set (me, me.v[0])
-        print 'SFR.%02X died' % (me.p)
+        print('SFR.%02X died' % (me.p))
 
     def doit (me):
         me.sfrmst.sfrwx (me.p, [me.v[-1]]) # main job of this class
         if me.d:
-            print 'SFR.%02X: %02X, [' % (me.p,me.v[-1]), \
-                  '%02X ' * len(me.v) % tuple(me.v)
+            print('SFR.%02X: %02X, [' % (me.p,me.v[-1]), \
+                  '%02X ' * len(me.v) % tuple(me.v))
 
     def get (me): return me.v[-1]
 

@@ -12,6 +12,7 @@ for xx in sys.argv:
         argv_hex += [int(xx,16)] if all (yy in '+-/^%' + string.hexdigits for yy in xx) else [xx]
         argv_dec += [int(xx,10)] if all (yy in '+-/^%' + string.digits    for yy in xx) else [xx]
 
+#print(len(sys.argv),len(argv_hex),len(argv_dec))
 
 def pop_argument ():
     global argv_hex, argv_dec
@@ -27,18 +28,18 @@ def no_argument ():
         for line in f:
             start = line.find ('sys.argv[')
             if line.find ('line')<0 and start>=0 and line.find (']==')>0:
-                print line[start:].lstrip(),
+                print(line[start:].lstrip(),end='')
             if line.find ('line')<0 and line.find ('% python')>=0:
                 cmd += '\n' + ' '.join(line.split()[0:])
             if line.find ('line')<0 and line.find ('tstmst_func')>=0: # if invoke tstmst_func()
                 basic_path = '/'.join(__file__.replace('\\','/').split('/')[0:-1]) + '/basic.py'
-                print basic_path
+                print(basic_path)
                 for gg in open (basic_path,'r'):
                     if gg.find ('line')<0 and gg.find ('sys.argv[1]')>=0:
-                        print gg,
+                        print(gg,end='')
 
-        print 'ex:',
-        print cmd if len(cmd) else '\n% '+sys.argv[0]
+        print('ex:',end='')
+        print(cmd if len(cmd) else '\n% '+sys.argv[0])
         f.close ()
         return TRUE
     else:
@@ -46,11 +47,11 @@ def no_argument ():
 
 
 def tstmst_func (tstmst):
-    if   sys.argv[1]=='rev'    : print "\n".join("{!r}:{!r}".format(j,k) for j,k in vars(tstmst.sfr).items())
-    elif sys.argv[1]=='sfr'    : print tstmst.sfr.query_sfr (argv_hex[2])
-    elif sys.argv[1]=='adc'    : print tstmst.get_adc10 (argv_hex[2])
-    elif sys.argv[1]=='read'   : print '0x%02x' % tstmst.sfrrx (argv_hex[2],1)[0]
-    elif sys.argv[1]=='wrx'    : print tstmst.sfrwx (argv_hex[2],argv_hex[3:])
+    if   sys.argv[1]=='rev'    : print("\n".join("{!r}:{!r}".format(j,k) for j,k in vars(tstmst.sfr).items()))
+    elif sys.argv[1]=='sfr'    : print(tstmst.sfr.query_sfr (argv_hex[2]))
+    elif sys.argv[1]=='adc'    : print(tstmst.get_adc10 (argv_hex[2]))
+    elif sys.argv[1]=='read'   : print('0x%02x' % tstmst.sfrrx (argv_hex[2],1)[0])
+    elif sys.argv[1]=='wrx'    : print(tstmst.sfrwx (argv_hex[2],argv_hex[3:]))
     elif sys.argv[1]=='w' or \
          sys.argv[1]=='write'  : tstmst.multi_write (sys.argv[2:])
     elif sys.argv[1]=='loopw'  : tstmst.loop_write  (sys.argv[2:])
@@ -77,16 +78,16 @@ def tstmst_func (tstmst):
             if len(sys.argv)==3 : tstmst.nvm_form (argv_hex[2],0x80)
             else                : tstmst.nvm_form (argv_hex[2],argv_hex[3])
 
-    elif sys.argv[1]=='stop'   : print tstmst.sfrwx (0xBC,[8]) # stop MCU
-    elif sys.argv[1]=='reset'  : print tstmst.sfrwx (0xF7,[1,1,1]) # reset MCU
+    elif sys.argv[1]=='stop'   : print(tstmst.sfrwx (0xBC,[8])) # stop MCU
+    elif sys.argv[1]=='reset'  : print(tstmst.sfrwx (0xF7,[1,1,1])) # reset MCU
 
     elif sys.argv[1]=='shift'  : tstmst.shift_osc (argv_dec[2])
     elif sys.argv[1]=='trim'   : tstmst.set_trim ()
-    elif sys.argv[1]=='get_trim' : print ['%02x' % xx for xx in tstmst.get_trim ()]
+    elif sys.argv[1]=='get_trim' : print(['%02x' % xx for xx in tstmst.get_trim ()])
 
     elif sys.argv[1]=='prog_raw' : tstmst.nvm_prog_raw_block (argv_hex[2:] if len(sys.argv)>3 else \
                                                                 map(ord,list(sys.argv[2])))
     elif sys.argv[1]=='dnload' : tstmst.nvm_download (sys.argv[2])
     elif sys.argv[1]=='burst'  : tstmst.nvm_upload_burst (sys.argv[2],argv_hex[3])
     elif sys.argv[1]=='test'   : tstmst.test (sys.argv[2:])
-    else: print "command not recognized,", sys.argv[1]
+    else: print("command not recognized,", sys.argv[1])

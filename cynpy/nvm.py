@@ -81,7 +81,7 @@ class nvm (object):
                 if addr < param['end']:
                     param['data'][addr-param['start']] = assign[ii+1]
                 else:
-                    print 'out-range assign'
+                    print('out-range assign')
 
         if 'block' in param:
             assert not 'blockw' in param and \
@@ -96,7 +96,7 @@ class nvm (object):
         blank= : blank check no/both/front/rear
         """
         if not 'no_note' in param:
-            print 'check from 0x%04x to 0x%04x' % (param['start'],param['end']-1),
+            print('check from 0x%04x to 0x%04x' % (param['start'],param['end']-1),end='')
         start = time.time ()
         mismatch = 0
         if not 'blockr' in param or param['blockr']=='':
@@ -107,8 +107,8 @@ class nvm (object):
             mismatch = me.nvm_block_chk (param['start'], param['data'], block)
 
         if not 'no_note' in param:
-            print ('\nmismatch: %s' % (mismatch)) if mismatch else 'complete'
-            print '%.1f sec' % (time.time () - start)
+            print(('\nmismatch: %s' % (mismatch)) if mismatch else 'complete')
+            print('%.1f sec' % (time.time () - start))
 
 
     def nvmprog (me, param):
@@ -118,7 +118,7 @@ class nvm (object):
         hiv=2 to byte-programming and check
         """
         note = False if 'no_note' in param else True
-        print 'program from 0x%04x to 0x%04x' % (param['start'],param['end']-1),
+        print('program from 0x%04x to 0x%04x' % (param['start'],param['end']-1),end='')
         hiv = 0 if not 'hiv' in param else int(param['hiv'])
         assert hiv>=0 and hiv<=2, "invalid 'hiv', %d" % hiv
         if not 'blockw' in param or param['blockw']=='':
@@ -150,7 +150,7 @@ class nvm (object):
         ptr = 0 # select a segment to do
         for ii in range(num):
             if wait and ii:
-                print 'wait %.1f sec(s)' % wait
+                print('wait %.1f sec(s)' % wait)
                 time.sleep (wait) # wait for NVM (ATTOP) cooldown
 
             temp['data'] = []
@@ -161,10 +161,10 @@ class nvm (object):
 
             temp['start'] = addr
             temp['end'] = addr + len(temp['data'])
-            print 'SEGM: %3d, %3d ---' % (ptr, len(temp['data'])),
+            print('SEGM: %3d, %3d ---' % (ptr, len(temp['data'])),end='')
             me.nvmprog (temp)
 
-            if wait==0: print
+            if wait==0: print()
             ptr = ptr+(1+intr) if ptr+(1+intr) < num \
                        else (ptr+1) % (1+intr) # wrap around
 
@@ -179,7 +179,7 @@ class nvm (object):
         segm = int(param['segm']) if 'segm' in param else 64
         intr = int(param['intr']) if 'intr' in param else 0x2000
         for ii in range(param['start'],param['end'],segm):
-            print 'SEGM: %3d ---' % ((ii-param['start'])/segm),
+            print('SEGM: %3d ---' % ((ii-param['start'])/segm),end='')
             temp['data'] = []
             for xx in range(segm):
                 if ii+xx < param['end']:
@@ -188,7 +188,7 @@ class nvm (object):
             temp['start'] = (ii + num*intr) % 0x4000
             temp['end'] = temp['start'] + len(temp['data'])
             me.nvmprog (temp)
-            print
+            print()
 
 
     def nvmargv (me, argvlst):
@@ -202,7 +202,7 @@ class nvm (object):
             block= : block_num if block
         """
         param = me.get_data_list (argvlst)
-#       print param
+#       print(param)
         if argvlst[0].find('prog',3)==3:
             me.nvmprog (param)
 
@@ -216,7 +216,7 @@ class nvm (object):
             me.nvmintr (param)
 
         else:
-            print "nvm command not recognized,", argvlst[0]
+            print("nvm command not recognized,", argvlst[0])
 
 
     def show_mismatch (me, adr, dat, exp, num, limit=50):
@@ -225,10 +225,10 @@ class nvm (object):
         and show mismatch messages
         """
         if dat != exp:
-            if num == limit: print 'suppress further display...',
-            elif num < limit: print
-            if num  < limit: print '0x%04X : %02X %c (!=%02X)' \
-               % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp),
+            if num == limit: print('suppress further display...',end='')
+            elif num < limit: print()
+            if num  < limit: print('0x%04X : %02X %c (!=%02X)' \
+               % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp),end='')
             return 1
         else:
             return 0
@@ -274,8 +274,8 @@ class nvm (object):
 
         me.sfr.pst_prog (me, rlst)
         if note:
-            print 'complete'
-            print "%.1f sec" % (time.time () - start)
+            print('complete')
+            print("%.1f sec" % (time.time () - start))
 
         end = addr+rawsz
 #       [addr_l,addr_h] = me.sfrri (me.sfr.OFS,2)
@@ -288,7 +288,7 @@ class nvm (object):
         """
         load file and return the array with byte-by-byte format
         """
-        print memfile
+        print(memfile)
         f = 0
         lines = []
         if memfile[-4:].lower() == '.bin':
@@ -307,15 +307,15 @@ class nvm (object):
                     lines.append (int(text[0:2],16))
 
         if f:
-            print '%d (0x%04x) byte(s)' % (len(lines),len(lines))
+            print('%d (0x%04x) byte(s)' % (len(lines),len(lines)))
             rem = len(lines) % me.sfr.nbyte
             if rem > 0:
-                print 'append 0xFF for programming unit,', me.sfr.nbyte - rem
+                print('append 0xFF for programming unit,', me.sfr.nbyte - rem)
                 for xx in range(me.sfr.nbyte - rem):
                     lines.append (0xff)
             f.close()
         else:
-            print 'ERROR: file open'
+            print('ERROR: file open')
 
         return lines
 

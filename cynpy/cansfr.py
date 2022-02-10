@@ -96,7 +96,7 @@ class sfr11xx (object):
         raise NotImplementedError()
 
     def check (me, revid):
-        for k,v in me.dict_id.iteritems():
+        for k,v in me.dict_id.items():
             if k is revid:
                 return TRUE
         return FALSE
@@ -108,7 +108,7 @@ class sfr11xx (object):
             return me.get_sfr_name (-1, something)
 
     def get_sfr_name (me, adr, name=''):
-        for k,v in list(vars(sfr11xx).iteritems()):
+        for k,v in list(vars(sfr11xx).items()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return '' # not found
@@ -155,7 +155,7 @@ class sfr1108 (sfr11xx):
         return org & 0xe0 | me.get_reverse (new, 5)
 
     def get_sfr_name (me, adr, name=''):
-        for k,v in list(vars(sfr1108).iteritems()):
+        for k,v in list(vars(sfr1108).items()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
@@ -163,9 +163,9 @@ class sfr1108 (sfr11xx):
     def pre_prog (me, tst, hiv=False, note=True):
         rlst = []
         if note:
-            print
-            print 'Provide VPP(6.5V) on VC1 for effective programming'
-            print 'VPP is FSM-switching, hiv =',hiv,'does not matter'
+            print()
+            print('Provide VPP(6.5V) on VC1 for effective programming')
+            print('VPP is FSM-switching, hiv =',hiv,'does not matter')
         return rlst
 
 
@@ -215,7 +215,7 @@ class sfr111x (sfr11xx):
         return org & 0xc0 | new & 0x3f
 
     def get_sfr_name (me, adr, name=''):
-        for k,v in list(vars(sfr111x).iteritems()):
+        for k,v in list(vars(sfr111x).items()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr11xx.get_sfr_name(me,adr,name)
@@ -227,15 +227,15 @@ class sfr111x (sfr11xx):
         if me.name.find ('CAN1112')==0:
             rlst += tst.sfrrx (me.CCCTL,1)
             if rlst[0] & 0xc0:
-                print 'both Rp is to be turned off'
+                print('both Rp is to be turned off')
                 tst.sfrwx (me.CCCTL, [rlst[2] & 0x3f]) # RP?_EN=0
         if hiv: # hiv=False to emulate
             tst.sfrwx (me.PWR_V, [120]) # set VIN=9.6V
 
-        print 'adj-VIN:',
+        print('adj-VIN:',end='')
         for xx in range(3):
-            print '%5.2f' % (10.0 * tst.get_adc10 (0) / 1000),
-        print 'V'
+            print('%5.2f' % (10.0 * tst.get_adc10 (0) / 1000),end='')
+        print('V')
 
         tst.sfrwx (me.SRCCTL, [rlst[1] | 0x40]) # set HVLDO high voltage
         if me.name.find ('CAN1110')==0:
@@ -254,11 +254,11 @@ class sfr111x (sfr11xx):
 #       me.sfrwx (me.sfr.SRCCTL, [rlst[1] &~0x02])
 #################################################################################
 ###     CC-ISP during voltage decending is not stable
-#       print 'pos-VIN:',
-#       print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
+#       print('pos-VIN:',end='')
+#       print('%5.2f' % (10.0 * me.get_adc10 (0) / 1000),end='')
 #       for xx in range(3):
-#           print '%5.2f' % (10.0 * me.get_adc10 (0) / 1000),
-#       print 'V'
+#           print('%5.2f' % (10.0 * me.get_adc10 (0) / 1000),end='')
+#       print('V')
 #################################################################################
 ###     so just delay
         time.sleep(1) # wait for voltage revovery
@@ -311,7 +311,7 @@ class sfr1110 (sfr111x):
         me.trimtable = {'addr':0x940,'width':5,'depth':6}
 
     def get_sfr_name (me, adr, name=''):
-        for k,v in list(vars(sfr1110).iteritems()):
+        for k,v in list(vars(sfr1110).items()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr111x.get_sfr_name(me,adr,name)
@@ -356,7 +356,7 @@ class sfr1112 (sfr111x):
         me.nvmmsk = 0x7fff # address width
 
     def get_sfr_name (me, adr, name=''):
-        for k,v in list(vars(sfr1112).iteritems()):
+        for k,v in list(vars(sfr1112).items()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
         return sfr111x.get_sfr_name(me,adr,name)
@@ -393,9 +393,9 @@ class sfr1124 (sfr1112):
             tst.sfrwx (me.NVMCTL, [0x80]) # set VPP=V5V (VPP=VDD normally)
 
         if note:
-            print
-            print 'Provide VPP=4.0V on V5V for effective programming'
-            print 'VPP SFR-switching, hiv =', hiv
+            print()
+            print('Provide VPP=4.0V on V5V for effective programming')
+            print('VPP SFR-switching, hiv =', hiv)
         return rlst
 
     def pst_prog (me, tst, rlst): # resume 5V

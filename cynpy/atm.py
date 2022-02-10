@@ -11,24 +11,24 @@ class atm (nvm):
     '''
 
     def sfr_form (me, adr, cnt=16):
-        print me.sfrri, adr
-        print 'sfr_dump: 0x%02x 0x%02x' % (adr,cnt)
+        print(me.sfrri, adr)
+        print('sfr_dump: 0x%02x 0x%02x' % (adr,cnt))
         if ((adr&0x0f)+cnt<=16 and cnt<=8): # in one line
-            print '0x%02x:' % adr,
+            print('0x%02x:' % adr,end=' ')
             r_dat = me.sfrri (adr,cnt)
             assert len(r_dat)==cnt, 'sfr read failed'
-            for i in range(cnt): print '%02x' % r_dat[i],
+            for i in range(cnt): print('%02x' % r_dat[i],end=' ')
         else:
             pos = adr&0x0f
             for ali in range(adr&0xf0,(adr+cnt+15)&0x1f0,0x10):
-                print '0x%02x:' % ali,
+                print('0x%02x:' % ali,end=' ')
                 r_dat = me.sfrri (ali,16-pos)
                 assert len(r_dat)==(16-pos), 'sfr read failed'
                 for i in range(0x10):
-                    if (i&0x07==0 and i>0): print ' ',
-                    if (ali+i<adr or ali+i>=adr+cnt): print '..',
-                    else: print '%02x' % r_dat[i-pos],
-                print
+                    if (i&0x07==0 and i>0): print(' ',end='')
+                    if (ali+i<adr or ali+i>=adr+cnt): print('..',end='')
+                    else: print('%02x' % r_dat[i-pos],end=' ')
+                print()
                 pos = 0
 
 
@@ -47,33 +47,33 @@ class atm (nvm):
 
     def nvm_form (me, ofs, cnt):
         assert ofs>=0 and cnt>0 and (ofs+cnt)<=me.sfr.nvmsz, 'out of range'
-        print 'remember to halt MCU in advance'
+        print('remember to halt MCU in advance')
         me.nvmset (ofs)
         if ((ofs&0x0f)+cnt<=16 and cnt<=8): # in one line
-            print '0x%04x:' % ofs,
+            print('0x%04x:' % ofs,end=' ')
             r_dat = me.nvmrx (cnt)
-            for i in range(cnt): print '%02x' % r_dat[i],
-            print
+            for i in range(cnt): print('%02x' % r_dat[i],end=' ')
+            print()
         else:
-            print 'nvm_form: 0x%04x, %0d' %(ofs,cnt)
+            print('nvm_form: 0x%04x, %0d' %(ofs,cnt))
             s_pos = ofs&0x0f
             lines = range(ofs&0xfff0,(ofs+cnt+15)&0xfff0,0x10)
             e_pos = 0x0f & (cnt - (16-s_pos))
             for ali in lines:
-                print '0x%04x:' % (ali&0x7fff),
+                print('0x%04x:' % (ali&0x7fff),end=' ')
                 if ali==lines[-1] and e_pos: num = e_pos
                 else: num = 16-s_pos
                 r_dat = me.nvmrx (num)
                 for i in range(0x10):
-                    if (i&0x07==0 and i>0): print ' ',
-                    if (ali+i<ofs or ali+i>=ofs+cnt): print '..',
-                    else: print '%02x' % r_dat[i-s_pos],
+                    if (i&0x07==0 and i>0): print(' ',end='')
+                    if (ali+i<ofs or ali+i>=ofs+cnt): print('..',end='')
+                    else: print('%02x' % r_dat[i-s_pos],end=' ')
                 endstr = '  '
                 for i in range(0x10):
                     if (ali+i<ofs or ali+i>=ofs+cnt or
                         r_dat[i-s_pos]<ord(' ') or r_dat[i-s_pos]>ord('~')): endstr += '.'
                     else: endstr += chr(r_dat[i-s_pos])
-                print endstr
+                print(endstr)
                 s_pos = 0
         me.sfrwx (me.sfr.DEC, [(ofs+cnt)>>8]) # clear ACK
 
@@ -82,12 +82,12 @@ class atm (nvm):
         assert n_avg > 0, 'avg number is at least 1'
         import KBHit
         kb = KBHit.KBHit ()
-        print me.sfrrx
-        print 'looped read (avg=%d), press any key.....' % n_avg
+        print(me.sfrrx)
+        print('looped read (avg=%d), press any key.....' % n_avg)
         cnt = 0
         r_avg = [0] * n_avg
         while 1:
-            print "\r0x%02x(%03d):" % (adr,cnt),
+            print("\r0x%02x(%03d):" % (adr,cnt),end='')
             try:
                 r_dat = me.sfrrx (adr,1)[0]
                 r_avg.pop()
@@ -101,12 +101,12 @@ class atm (nvm):
                     if r_dat<r_min: r_min = r_dat
                     if r_dat>r_max: r_max = r_dat
 #                   r_cnt[r_avg[i]] += 1
-#               print r_avg,
-#               print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
-                print "%3d %3d %3d" % (r_min,r_sum/n_avg,r_max),
+#               print(r_avg,end=' ')
+#               print("%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),end=' ')
+                print("%3d %3d %3d" % (r_min,r_sum/n_avg,r_max),end=' ')
                 cnt += 1
             except:
-                print "--",
+                print("--",end='')
             if kb.kbhit (): break
 
 
@@ -115,18 +115,18 @@ class atm (nvm):
         for it in args[0:]:
             [adr_h, dat_h] = it.split('=')
             rs = me.sfrwx (int(adr_h,16),[int(dat_h,16)])
-            if verbose: print rs
+            if verbose: print(rs)
 
 
     def loop_write (me, plist): # looped writing
         if (len(plist)>0):
             import KBHit
             kb = KBHit.KBHit ()
-            print me.sfrwx
-            print 'looped writing, press any key.....'
+            print(me.sfrwx)
+            print('looped writing, press any key.....')
             cnt = 1
             while 1:
-                print "\r%0d" % cnt,
+                print("\r%0d" % cnt,end='')
                 me.multi_write (plist,0)
                 if kb.kbhit (): break
                 cnt += 1
@@ -136,19 +136,19 @@ class atm (nvm):
         if (len(plist)>0):
             import KBHit
             kb = KBHit.KBHit ()
-            print me.sfrrx
-            print 'looped read, press any key.....'
+            print(me.sfrrx)
+            print('looped read, press any key.....')
             cnt = 1
             while 1:
-                print "\r%0d:" % cnt,
+                print("\r%0d:" % cnt,end='')
                 for xx in range (len(plist)):
                     try:
                         r_dat = me.sfrrx (int(plist[xx],16),1)[0]
-#                       print " %02x: %02x" %(int(plist[xx],16),r_dat),
-                        print " %02x: %3d" %(int(plist[xx],16),r_dat),
+#                       print(" %02x: %02x" %(int(plist[xx],16),r_dat),end=' ')
+                        print(" %02x: %3d" %(int(plist[xx],16),r_dat),end=' ')
                     except:
-                        print " %02x: --" %(int(plist[xx],16)),
-#               if not (cnt%10): print
+                        print(" %02x: --" %(int(plist[xx],16)),end=' ')
+#               if not (cnt%10): print()
                 if kb.kbhit (): break
                 cnt += 1
 
@@ -157,18 +157,18 @@ class atm (nvm):
         if (len(plist[0])>0):
             import KBHit
             kb = KBHit.KBHit ()
-            print me.sfrwx
-            print 'looped write/read test, press any key.....'
+            print(me.sfrwx)
+            print('looped write/read test, press any key.....')
             cnt = 0
             while 1:
-                print "\r%0d:" % cnt,
+                print("\r%0d:" % cnt,end='')
                 for xx in range (len(plist)):
                     wdat = random.randint(0,255)
                     me.sfrwx (int(plist[xx],16), [wdat]);
-                    print " %02x: %02x" % (int(plist[xx],16),wdat),
+                    print(" %02x: %02x" % (int(plist[xx],16),wdat),end=' ')
                     r_dat = me.sfrrx (int(plist[xx],16),1)[0]
                     if r_dat!=wdat:
-                        print " failed: %02x returned" % (r_dat)
+                        print(" failed: %02x returned" % (r_dat))
                         exit (-1)
                 if kb.kbhit (): break
                 cnt += 1
@@ -214,7 +214,7 @@ class atm (nvm):
     def scope_adc (me, chn): # read and print the variation
         import KBHit
         kb = KBHit.KBHit ()
-        print 'looped read, press any key.....'
+        print('looped read, press any key.....')
         cnt = 0
         r_max = 0
         r_min = 0xfff
@@ -223,16 +223,16 @@ class atm (nvm):
         me.sfrwx (me.sfr.DACEN, [0x01 << chn])
         me.sfrwx (me.sfr.DACCTL,[0x4F]) # 10-bit looped
         while 1:
-            print "\rADC%d(%0d):" % (chn,cnt),
+            print("\rADC%d(%0d):" % (chn,cnt),end='')
             try:
                 r_dat  = me.sfrrx (me.sfr.DACV0 + chn, 1)[0] * 4
                 r_dat += me.sfrrx (me.sfr.DACLSB,      1)[0] & 0x03
                 if r_dat<r_min: r_min = r_dat
                 if r_dat>r_max: r_max = r_dat
-                print "%03d %03d %03d mV" % (r_min*2,r_dat*2,r_max*2),
+                print("%03d %03d %03d mV" % (r_min*2,r_dat*2,r_max*2),end='')
                 cnt += 1
             except:
-                print "---",
+                print("---",end='')
             if kb.kbhit (): break
         me.sfrwx (me.sfr.DACEN, sav0)
         me.sfrwx (me.sfr.DACCTL,[0])
@@ -248,7 +248,7 @@ class atm (nvm):
         save into the binary file 'binfile'
         detect upper boundary for ending the file
         '''
-        print 'download NVM...', binfile
+        print('download NVM...', binfile)
         dncode = ''
         lastcode = 0
         block = 34
@@ -262,19 +262,19 @@ class atm (nvm):
                 if rdat[yy] != 0xff:
                     lastcode = xx + yy
 
-        print '%.1f sec' % (time.time () - start)
+        print('%.1f sec' % (time.time () - start))
         dec = me.sfrrx (me.sfr.DEC, 1)[0]
         me.sfrwx (me.sfr.DEC, [(me.sfr.nvmmsk >> 8) & dec]) # clear ACK
 
-        print len(dncode), '(0x%04x) bytes read' % len(dncode)
-        print lastcode+1, '(0x%04x) bytes written' % (lastcode+1)
+        print(len(dncode), '(0x%04x) bytes read' % len(dncode))
+        print(lastcode+1, '(0x%04x) bytes written' % (lastcode+1))
 
         f = open(binfile,'wb')
         if f:
             f.write(dncode)
             f.close()
         else:
-            print 'ERROR: file open'
+            print('ERROR: file open')
 
 
     def get_trim (me):
@@ -307,7 +307,7 @@ class atm (nvm):
         '''
         '''
         trimvec = me.get_trim ()
-        print ['%02x' % xx for xx in trimvec]
+        print(['%02x' % xx for xx in trimvec])
         for ii in range(len(me.sfr.trimsfr)):
             me.sfrwx (me.sfr.trimsfr[ii],[trimvec[ii]&~me.sfr.trimmsk[ii]])
 
@@ -320,5 +320,5 @@ class atm (nvm):
         new = me.sfr.get_osc (org, delta)
         assert new<=127 and new >=-128, ('SFR(OSC) to be out-of-range', new)
         me.sfrwx (me.sfr.sfr_osc, [new])
-        print 'OSC trim [0x%02X]: 0x%02X -> 0x%02X' % (me.sfr.sfr_osc, org, new)
+        print('OSC trim [0x%02X]: 0x%02X -> 0x%02X' % (me.sfr.sfr_osc, org, new))
 
