@@ -337,8 +337,6 @@ class ams (updprl):
         \r    '1'-'7' : PDO position for request
         \r    'q'     : go AMS_TX
         \r    'h'     : show this message
-        \rMODE  [AMS_TX]
-        \r    'g'     : send Get_Source_Cap and nego. again
         \rMODE  [AMS_PPS]
         \r    '+'     : request again with increased target voltage
         \r    '-'     : request again with decreased target voltage
@@ -353,6 +351,7 @@ class ams (updprl):
         \r    'v'     : Discvoer_Id(VDM)
         \r    'V'     : VCONN_Swap
         \r    'd'     : DR_Swap
+        \r    'g'     : Get_Source_Cap and nego.
         \r    'r'     : Hard Reset
         \r    'q'     : go AMS_RX
         \r    |ESC|   : exit

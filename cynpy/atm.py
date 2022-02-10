@@ -309,7 +309,7 @@ class atm (nvm):
         trimvec = me.get_trim ()
         print ['%02x' % xx for xx in trimvec]
         for ii in range(len(me.sfr.trimsfr)):
-            print me.sfrwx (me.sfr.trimsfr[ii],[trimvec[ii]])
+            me.sfrwx (me.sfr.trimsfr[ii],[trimvec[ii]&~me.sfr.trimmsk[ii]])
 
 
     def shift_osc (me, delta):

@@ -306,6 +306,7 @@ class sfr1110 (sfr111x):
         me.dummy = 3
         me.nvmsz = 0x2000
         me.nvmmsk = 0x1fff # address width
+        me.trimmsk = [0x00]*5
         me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3,me.REGTRM4]
         me.trimtable = {'addr':0x940,'width':5,'depth':6}
 
@@ -381,6 +382,7 @@ class sfr1124 (sfr1112):
         super(sfr1124,me).__init__ (revid)
         me.nbyte = 1
         me.nvmsz = 0x4080
+        me.trimmsk = [0x00]*8
         me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3,me.REGTRM4, \
                       me.CCOFS,me.ADOFS,me.ISOFS]
         me.trimtable = {'addr':0x2000,'width':16,'depth':6}
