@@ -41,6 +41,7 @@ class nvm (object):
         """
         data_list = []
         addr_assign = [] # ordered assignment
+        assert len(argvlst)>=2, 'start address not found'
         rtn = {'data' : data_list, \
                'addr' : addr_assign, \
                'start': int(argvlst[1],16)}
@@ -71,10 +72,14 @@ class nvm (object):
         if 'file' in param:
             assert len(param['data'])==0, 'either file= or data_list'
             param['data'] = me.get_file (param['file'])
-        else:
-            assert len(param['data'])>0, 'no data_list to do'
+#       else:
+#           assert len(param['data'])>0, 'no data_list to do'
 
-        param['end'] = param['start'] + len(param['data'])
+        if 'end' in param: # higher priority
+            param['end'] = int(param['end'],16)
+        else:
+            param['end'] = param['start'] + len(param['data'])
+
         for assign in param['addr']:
             for ii in range(len(assign[1:])):
                 addr = ii + int(assign[0],16)
@@ -191,12 +196,54 @@ class nvm (object):
             print()
 
 
+    def nvmsum15 (me, param):
+        """
+        start: start address (even number)
+        end  : count (word)
+        check empty IC w/ TCODE:
+        X:\project\git\workpy\cynpy>python -B csp.py nvmsum15 0 end=900 no_note=
+        """
+        assert param['start'] < param['end'], 'invalid end address'
+        (hi,lo,sum) = (0,0,0)
+        print 'summation from 0x%04x to 0x%04x' % (param['start'],param['end']-1)
+        if 'file' in param:
+            rdat = param['data'][param['start']:]
+            if 'tcode' in param:
+                sum = -(~(int(param['tcode'],16)+0x7f00))
+                print 'summation with TCODE_%02X' % (int(param['tcode'],16)) # CAN1123A0: FB
+        else:
+            rdat = me.nvm_block_read (param['start'],param['end']-param['start'])
+
+        for ii in range(param['end']-param['start']): # count (byte)
+            if (param['start']+ii)%2:
+                hi = (~rdat[ii])%256
+                sum += lo + (hi*256 if hi<0x80 else (hi-0x80)*256 + 1)
+                sum %= 256*128
+                if not 'no_note' in param:
+                    print '0x%04x:' % (param['start']+ii-1),
+                    print '%02x %02x => %02x %02x =>' % (rdat[ii],rdat[ii-1],lo,hi),
+                    print '0x%04x (%d)' % (sum,sum)
+            else:
+                lo = (~rdat[ii])%256
+
+        if param['end']%2: # to support odd number end address
+            sum += lo
+            sum %= 256*128
+            print '0x%04x:' % (param['start']+ii),
+            print '%02x => %02x' % (rdat[ii],lo)
+
+        print '0x%04x (%d)' % (sum,sum)
+        print '0x%04x => 0x%04x' % ((-sum)%(256*128),(~(-sum))%(256*256))
+
+
     def nvmargv (me, argvlst):
         """
         parse argvlst
         nvm(cmd)
             prog
             comp
+            segm
+            intr
         create expcod
         get options
             block= : block_num if block
@@ -215,6 +262,9 @@ class nvm (object):
         elif argvlst[0].find('intr',3)==3: # interleaved prog/comp
             me.nvmintr (param)
 
+        elif argvlst[0].find('sum15',3)==3: # 15-bit summation
+            me.nvmsum15 (param)
+
         else:
             print("nvm command not recognized,", argvlst[0])
 
@@ -232,6 +282,18 @@ class nvm (object):
             return 1
         else:
             return 0
+
+        
+    def nvm_block_read (me, addr, cnt, block=32):
+        """
+        """
+        rdat = []
+        me.nvmset (addr)
+        for xx in range(addr,addr+cnt,block):
+            rem = addr + cnt - xx
+            rcnt = block if rem >= block else rem
+            rdat += me.nvmrx (rcnt)
+        return rdat
 
         
     def nvm_block_chk (me, addr, expcod, block=256, mismatch=0):

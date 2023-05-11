@@ -30,7 +30,7 @@ class updprl (cani2c):
 
         super(updprl, me).__init__ (i2cmst, deva)
 
-        me.prltx = sfr(me, me.sfr.PRLTX, -1, TRUE)
+        me.prltx = sfr(me, me.sfr.PRLTX, -1)
         me.txctl = sfr(me, me.sfr.TXCTL, -1, TRUE)
 
         me.sfrwx (me.sfr.RXCTL,[0x7f])

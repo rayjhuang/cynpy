@@ -20,15 +20,19 @@ class can11xx (object):
         me.sfr = sfr11xx() # initial
         if me.is_master_rdy():
             revid = me.get_revid ()
-#           print('master is ready', revid)
+#           print('master is ready, 0x%02x' % revid)
             if revid > 0: # found
                 if   sfr1108().check (revid): me.sfr = sfr1108(revid)
                 elif sfr1110().check (revid): me.sfr = sfr1110(revid)
                 elif sfr1112().check (revid): me.sfr = sfr1112(revid)
+                elif sfr1123().check (revid): me.sfr = sfr1123(revid)
                 elif sfr1124().check (revid): me.sfr = sfr1124(revid)
+                elif sfr1125().check (revid): me.sfr = sfr1125(revid)
                 else:
                     print('un-recognized REVID: %02X' % revid)
                     me.sfr = sfr11xx()
+                    print 'un-recognized REVID: 0x%02x' % revid
+#               print me.sfr
 #       else:
 #           print('master is not ready')
 

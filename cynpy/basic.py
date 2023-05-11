@@ -21,6 +21,24 @@ def pop_argument ():
     argv_dec = [argv_dec[0]] + argv_dec[2:]
 
 
+def sfr_vars (tstmst,argv2="",argv3=""):
+    if argv2=='':
+        print "\n".join("{!r}:{!r}".format(j,k) for j,k in \
+                   vars(tstmst.sfr).items())
+    elif argv3=='':
+        print type(vars(tstmst.sfr)[argv2]), \
+                   vars(tstmst.sfr)[argv2]
+    elif argv3=='hexlist':
+       print ['%02x' % xx for xx in \
+                      vars(tstmst.sfr)[argv2]]
+    elif argv3=='hex':
+       print '%02x' % vars(tstmst.sfr)[argv2]
+
+    if argv3=='sfr':
+        for ii in range(16):
+            print '0x%02x:' % (argv_hex[2]/16*16+ii), tstmst.sfr.query_sfr (argv_hex[2]/16*16+ii)
+
+
 def no_argument ():
     if len(sys.argv) < 2:
         f = open (sys.argv[0],'r')
@@ -47,8 +65,9 @@ def no_argument ():
 
 
 def tstmst_func (tstmst):
-    if   sys.argv[1]=='rev'    : print("\n".join("{!r}:{!r}".format(j,k) for j,k in vars(tstmst.sfr).items()))
-    elif sys.argv[1]=='sfr'    : print(tstmst.sfr.query_sfr (argv_hex[2]))
+    if   sys.argv[1]=='sfr'    : sfr_vars (tstmst,sys.argv[2],'sfr')
+    elif sys.argv[1]=='vars'   : sfr_vars (tstmst,sys.argv[2] if len(sys.argv)>2 else "", \
+                                                  sys.argv[3] if len(sys.argv)>3 else "");
     elif sys.argv[1]=='adc'    : print(tstmst.get_adc10 (argv_hex[2]))
     elif sys.argv[1]=='read'   : print('0x%02x' % tstmst.sfrrx (argv_hex[2],1)[0])
     elif sys.argv[1]=='wrx'    : print(tstmst.sfrwx (argv_hex[2],argv_hex[3:]))
@@ -63,6 +82,9 @@ def tstmst_func (tstmst):
         else                   : tstmst.scope_sfr (argv_hex[2],argv_dec[3])
     elif sys.argv[1]=='scope_adc' : tstmst.scope_adc (argv_hex[2])
 
+    elif sys.argv[1]=='fill'   : tstmst.pg0_fill (argv_dec[2],argv_hex[3],argv_hex[4])
+    elif sys.argv[1]=='pg0'    : tstmst.pg0_form (argv_dec[2])
+        
     elif sys.argv[1]=='d' or \
          sys.argv[1]=='dump'   : # def sfr_form (me, adr, cnt=16):
         if   len(sys.argv)==2  : tstmst.sfr_form (0x80,0x80)
@@ -72,6 +94,8 @@ def tstmst_func (tstmst):
         if   sys.argv[1].find('prog',3)==3 \
           or sys.argv[1].find('comp',3)==3 \
           or sys.argv[1].find('segm',3)==3 \
+          or sys.argv[1].find('intr',3)==3 \
+          or sys.argv[1].find('sum15',3)==3 \
           or len(sys.argv[1])>3 : tstmst.nvmargv (sys.argv[1:])
         elif   len(sys.argv)==2 : tstmst.nvm_form (0x900,0x80)
         else: # >2
