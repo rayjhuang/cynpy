@@ -5,12 +5,11 @@ if __name__ == '__main__':
     % python isp.py rev
     % python isp.py write bc 8
     '''
-    import i2c
-    i2cmst = i2c.choose_master ()
-
     import sys, time
     import basic as cmd
     if not cmd.no_argument ():
+        import i2c
+        i2cmst = i2c.choose_master ()
         if i2cmst:
             if sys.argv[1]=='ams':
                 import KBHit
@@ -40,5 +39,8 @@ if __name__ == '__main__':
                 import sfrmst
                 tstmst = sfrmst.tsti2c(busmst=i2cmst, deva=0x70)
                 cmd.tstmst_func (tstmst)
+
+            i2cmst.__del__()
+
         else:
             raise 'I2C master not found'

@@ -74,6 +74,8 @@ class canm0 (updprl):
 
             ret = me.csp_prefix ([0x00,0x01]) # no-data CSP write
             print 'pass' if ret == '' else ret
+#           print 'pass (0x%02x)' % (me.cspr (me.sfr.REVID,0,1)[0]) \
+#              if ret == '' else ret
             lst = new
             new = me.sfr.get_osc (lst, 1) # step-up
 

@@ -10,6 +10,29 @@ class atm (nvm):
     for those SFR master, sfri2c and sfrcsp
     '''
 
+    def pg0_fill (me, bnk=-1, dat=0, msk=0x10): # bnk=-1 for all bank
+        print me.sfrwi, '%d 0x%02x 0x%02x' % (bnk,dat,msk)
+        for bb in range(me.sfr.sramsz/128) if bnk==-1 else [bnk]:
+            print 'fill bank %0d of PG0' % bb
+            sav = me.sfrrx (me.sfr.I2CCTL,1)[0]
+            me.sfrwx (me.sfr.I2CCTL,[(sav&0x01)|(bb<<1)|msk])
+            for ali in range(0,0x7f,0x10):
+                me.sfrwi (ali,[dat]*16)
+        
+    def pg0_form (me, bnk=-1): # bnk=-1 for all bank
+        print me.sfrri, '%d\npg0_dump:' % (bnk)
+        for bb in range(me.sfr.sramsz/128) if bnk==-1 else [bnk]:
+            sav = me.sfrrx (me.sfr.I2CCTL,1)[0]
+            me.sfrwx (me.sfr.I2CCTL,[(sav&0x01)|(bb<<1)])
+            for ali in range(0,0x7f,0x10):
+                print '%1x:0x%02x:' % (bb,ali),
+                r_dat = me.sfrri (ali,16)
+                assert len(r_dat)==(16), 'sfr read failed'
+                for ii in range(0x10):
+                    if (ii&0x07==0 and ii>0): print ' ',
+                    print '%02x' % r_dat[ii],
+                print
+
     def sfr_form (me, adr, cnt=16):
         print me.sfrri, adr
         print 'sfr_dump: 0x%02x 0x%02x' % (adr,cnt)
@@ -86,6 +109,8 @@ class atm (nvm):
         print 'looped read (avg=%d), press any key.....' % n_avg
         cnt = 0
         r_avg = [0] * n_avg
+        r_min = 0xff
+        r_max = 0
         while 1:
             print "\r0x%02x(%03d):" % (adr,cnt),
             try:
@@ -94,16 +119,14 @@ class atm (nvm):
                 r_avg.insert(0,r_dat)
 #               r_cnt = [0] * 256
                 r_sum = 0
-                r_min = 0xff
-                r_max = 0
                 for i in range(n_avg):
                     r_sum += r_avg[i]
                     if r_dat<r_min: r_min = r_dat
                     if r_dat>r_max: r_max = r_dat
 #                   r_cnt[r_avg[i]] += 1
 #               print r_avg,
-#               print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
-                print "%3d %3d %3d" % (r_min,r_sum/n_avg,r_max),
+                print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
+#               print "%3d %3d %3d"    % (r_min,r_sum/n_avg,r_max),
                 cnt += 1
             except:
                 print "--",
@@ -144,8 +167,8 @@ class atm (nvm):
                 for xx in range (len(plist)):
                     try:
                         r_dat = me.sfrrx (int(plist[xx],16),1)[0]
-#                       print " %02x: %02x" %(int(plist[xx],16),r_dat),
-                        print " %02x: %3d" %(int(plist[xx],16),r_dat),
+                        print " %02x:0x%02x" %(int(plist[xx],16),r_dat),
+#                       print " %02x: %3d" %(int(plist[xx],16),r_dat),
                     except:
                         print " %02x: --" %(int(plist[xx],16)),
 #               if not (cnt%10): print

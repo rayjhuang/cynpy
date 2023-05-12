@@ -143,6 +143,7 @@ class sfr1108 (sfr11xx):
         me.trimmsk = [0x03,0xe0] # only 11 bits valid
         me.trimsfr = [me.AOPTL,me.AOPTH]
         me.trimtable = {'addr':0x970,'width':2,'depth':9}
+        me.sramsz = 128*4
 
         me.sfr_osc = me.AOPTH
 
@@ -158,7 +159,7 @@ class sfr1108 (sfr11xx):
         for k,v in list(vars(sfr1108).iteritems()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
-        return sfr11xx.get_sfr_name(me,adr,name)
+        return super(sfr1108,me).get_sfr_name(adr,name)
 
     def pre_prog (me, tst, hiv=False, note=True):
         rlst = []
@@ -218,7 +219,7 @@ class sfr111x (sfr11xx):
         for k,v in list(vars(sfr111x).iteritems()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
-        return sfr11xx.get_sfr_name(me,adr,name)
+        return super(sfr111x,me).get_sfr_name(adr,name)
 
     def pre_prog (me, tst, hiv=False, note=True):
         rlst = \
@@ -306,15 +307,15 @@ class sfr1110 (sfr111x):
         me.dummy = 3
         me.nvmsz = 0x2000
         me.nvmmsk = 0x1fff # address width
-        me.trimmsk = [0x00]*5
         me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3,me.REGTRM4]
         me.trimtable = {'addr':0x940,'width':5,'depth':6}
+        me.trimmsk = [0x00]*len(me.trimsfr)
 
     def get_sfr_name (me, adr, name=''):
         for k,v in list(vars(sfr1110).iteritems()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
-        return sfr111x.get_sfr_name(me,adr,name)
+        return super(sfr1110,me).get_sfr_name(adr,name)
 
 
 
@@ -345,7 +346,8 @@ class sfr1112 (sfr111x):
     dict_id = {0x2a:'CAN1112AX', \
                0x2b:'CAN1112B0', \
                0x2c:'CAN1112B1', \
-               0x2d:'CAN1112B2'}
+               0x2d:'CAN1112B2', \
+               0x5a:'CAN1121A0'}
 
     def __init__ (me, revid=0):
         super(sfr1112,me).__init__ (revid)
@@ -359,7 +361,7 @@ class sfr1112 (sfr111x):
         for k,v in list(vars(sfr1112).iteritems()):
             if adr >= 0 and v == adr: return k
             if adr < 0 and k == name: return '0x%02X' % v
-        return sfr111x.get_sfr_name(me,adr,name)
+        return super(sfr1112,me).get_sfr_name(adr,name)
 
 
 
@@ -376,16 +378,24 @@ class sfr1124 (sfr1112):
     NVMCTL  = 0x12 # CAN1124
 
     dict_id = {0x2e:'CAN1124A0', \
-               0x2f:'CAN1124B0'}
+               0x2f:'CAN1124B0', \
+               0x30:'CAN1126A0'}
 
     def __init__ (me, revid=0):
         super(sfr1124,me).__init__ (revid)
         me.nbyte = 1
         me.nvmsz = 0x4080
-        me.trimmsk = [0x00]*8
         me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3,me.REGTRM4, \
                       me.CCOFS,me.ADOFS,me.ISOFS]
         me.trimtable = {'addr':0x2000,'width':16,'depth':6}
+        me.trimmsk = [0x00]*len(me.trimsfr)
+        me.sramsz = 128*12
+
+    def get_sfr_name (me, adr, name=''):
+        for k,v in list(vars(sfr1124).iteritems()):
+            if adr >= 0 and v == adr: return k
+            if adr < 0 and k == name: return '0x%02X' % v
+        return super(sfr1124,me).get_sfr_name(adr,name)
 
     def pre_prog (me, tst, hiv=False, note=True):
         rlst = tst.sfrrx (me.NVMCTL,1) # save NVMCTL
@@ -400,3 +410,74 @@ class sfr1124 (sfr1112):
 
     def pst_prog (me, tst, rlst): # resume 5V
         tst.sfrwx (me.NVMCTL, [rlst[0]]) # recover VPP
+
+
+
+class sfr1125 (sfr1108):
+
+    REGTRM0 = 0xa2
+    REGTRM1 = 0xa3
+    REGTRM2 = 0xa4
+
+    RXCTL   = 0xad
+    VCNCTL  = 0xae
+    CCCTL   = 0xaf
+
+    GPF     = 0xbb
+
+    NVMCTL  = 0xe3
+    BISTDAT = 0xe4
+    BISTCTL = 0xe5
+    
+    dict_id = {0x1b:'CAN1125A0'}
+
+    def __init__ (me, revid=0):
+        super(sfr1125,me).__init__ (revid)
+        me.nbyte = 1
+        me.nvmsz = 0x1020
+        me.nvmmsk = 0x0fff # address width
+        me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2]
+        me.trimtable = {'addr':0x0940,'width':6,'depth':4}
+        me.trimmsk = [0x00]*len(me.trimsfr)
+
+    def get_sfr_name (me, adr, name=''):
+        for k,v in list(vars(sfr1125).iteritems()):
+            if adr >= 0 and v == adr: return k
+            if adr < 0 and k == name: return '0x%02X' % v
+        return super(sfr1125,me).get_sfr_name(adr,name)
+
+
+
+class sfr1123 (sfr1124):
+
+    REGTRM0 = 0xa1
+    REGTRM1 = 0xa2
+    REGTRM2 = 0xa3
+    REGTRM3 = 0xa4
+    REGTRM4 = 0xa5
+    REGTRM5 = 0xa6
+    REGTRM6 = 0xa7
+
+    GPF     = 0xbb
+
+    NVMCTL  = 0x13 # CAN1123
+
+    dict_id = {0x6b:'CAN1123A0'}
+
+    def __init__ (me, revid=0):
+        super(sfr1123,me).__init__ (revid)
+        me.nbyte = 1
+#       me.nvmsz = 0x2040
+        me.nvmsz = 0x7000
+        me.trimsfr = [me.REGTRM0,me.REGTRM1,me.REGTRM2,me.REGTRM3, \
+                      me.REGTRM4,me.REGTRM5,me.REGTRM6, \
+                      me.CCOFS,me.ADOFS,me.ISOFS]
+        me.trimtable = {'addr':0x1000,'width':16,'depth':6}
+        me.trimmsk = [0x00]*len(me.trimsfr)
+
+    def get_sfr_name (me, adr, name=''):
+        for k,v in list(vars(sfr1123).iteritems()):
+            if adr >= 0 and v == adr: return k
+            if adr < 0 and k == name: return '0x%02X' % v
+        return super(sfr1123,me).get_sfr_name(adr,name)
+

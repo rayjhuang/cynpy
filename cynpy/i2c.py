@@ -18,18 +18,24 @@ class i2c (object): # for polymorphism
     def i2cw (me, wdat): raise NotImplementedError()
     def read (me, dev, adr, rcnt, rpt=FALSE): raise NotImplementedError()
 
-    def write (me, dev, adr, wdat): # SMB write
-        return me.i2cw ([dev,adr]+wdat)[1]
+    def write (me, dev, cmd, wdat): # SMB write
+        return me.i2cw ([dev,cmd]+wdat)[1]
 
     def probe (me):
         print 'Searching I2C slave.....'
         hit = []
         for dev in range(0x80):
+
             if me.i2cw ([dev]):
                 print 'device 0x%02x found' % (dev)
                 hit += [dev]
         return hit
 
+    def test (me, dev, cmd):
+        print 'I2C pattern for measurement.....'
+        me.read (dev, cmd, 1)
+        me.read (dev, cmd, 1)
+        me.write (dev, cmd, [3])
 
 
 def choose_master (rpt=FALSE):
@@ -46,14 +52,17 @@ def choose_master (rpt=FALSE):
 
 if __name__ == '__main__':
 
-    i2cmst = choose_master (rpt=TRUE)
-
     from basic import *
     if not no_argument ():
-#       if i2cmst!=0:
+        i2cmst = choose_master (rpt=TRUE)
+        if i2cmst!=0:
             if   sys.argv[1]=='probe' : print i2cmst.probe ()
             elif sys.argv[1]=='baud'  : print i2cmst.baud (argv_dec[2])
             elif sys.argv[1]=='write' : print i2cmst.i2cw (argv_hex[2:])[1]
             elif sys.argv[1]=='read'  : print ['0x%02X' % xx for xx in i2cmst.read (argv_hex[2], argv_hex[3], argv_hex[4])]
+            elif sys.argv[1]=='test'  : i2cmst.test (argv_hex[2], argv_hex[3])
             else: print "command not recognized"
-#       else: print "I2C master not found"
+        else:
+            print "I2C master not found"
+
+        i2cmst.__del__()
