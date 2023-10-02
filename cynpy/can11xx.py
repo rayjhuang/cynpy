@@ -31,7 +31,7 @@ class can11xx (object):
                 else:
                     print('un-recognized REVID: %02X' % revid)
                     me.sfr = sfr11xx()
-                    print 'un-recognized REVID: 0x%02x' % revid
+                    print('un-recognized REVID: 0x%02x' % revid)
 #               print me.sfr
 #       else:
 #           print('master is not ready')

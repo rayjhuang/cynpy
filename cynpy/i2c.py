@@ -25,14 +25,14 @@ class i2c (object): # for polymorphism
         print('Searching I2C slave.....')
         hit = []
         for dev in range(0x80):
-            (sta1,sta2) = me.i2cw ([dev])
-            if sta1==0:
+
+            if me.i2cw ([dev]):
                 print('device 0x%02x found' % (dev))
                 hit += [dev]
         return hit
 
     def test (me, dev, cmd):
-        print 'I2C pattern for measurement.....'
+        print('I2C pattern for measurement.....')
         me.read (dev, cmd, 1)
         me.read (dev, cmd, 1)
         me.write (dev, cmd, [3])
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     from basic import *
     if not no_argument ():
         i2cmst = choose_master (rpt=TRUE)
-        if i2cmst:
+        if i2cmst!=0:
             if   sys.argv[1]=='probe' : print(i2cmst.probe ())
             elif sys.argv[1]=='baud'  : print(i2cmst.baud (argv_dec[2]))
             elif sys.argv[1]=='write' : print(i2cmst.i2cw (argv_hex[2:])[1])

@@ -20,7 +20,7 @@ class cspnvm (object):
         for yy in range(4): # show OTP header
             for xx in me.busmst.sfrrx (me.busmst.sfr.NVMIO,16):
                 sys.stdout.write ('%c' % xx)
-            print()
+            print
 
         me.busmst.sfrwx (me.busmst.sfr.DEC,   [0])
 #       me.busmst.sfrwx (me.busmst.sfr.MISC,  [0x02]) # tell bridge to plus 1 dummy

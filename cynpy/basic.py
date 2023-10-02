@@ -23,20 +23,22 @@ def pop_argument ():
 
 def sfr_vars (tstmst,argv2="",argv3=""):
     if argv2=='':
-        print "\n".join("{!r}:{!r}".format(j,k) for j,k in \
-                   vars(tstmst.sfr).items())
+        print("\n".join("{!r}:{!r}".format(j,k) for j,k in \
+                   vars(tstmst.sfr).items()))
     elif argv3=='':
-        print type(vars(tstmst.sfr)[argv2]), \
-                   vars(tstmst.sfr)[argv2]
+        print(type(vars(tstmst.sfr)[argv2]), \
+                   vars(tstmst.sfr)[argv2])
     elif argv3=='hexlist':
-       print ['%02x' % xx for xx in \
-                      vars(tstmst.sfr)[argv2]]
+        print(['%02x' % xx for xx in \
+                      vars(tstmst.sfr)[argv2]]) # vars trimsfr hexlist
     elif argv3=='hex':
-       print '%02x' % vars(tstmst.sfr)[argv2]
+        print('%02x' % vars(tstmst.sfr)[argv2]) # vars revid hex
+    elif argv3=='str':
+        print(vars(tstmst.sfr)[argv2]) # vars name str
 
     if argv3=='sfr':
         for ii in range(16):
-            print '0x%02x:' % (argv_hex[2]/16*16+ii), tstmst.sfr.query_sfr (argv_hex[2]/16*16+ii)
+            print('0x%02x:' % (argv_hex[2]/16*16+ii), tstmst.sfr.query_sfr (argv_hex[2]/16*16+ii))
 
 
 def no_argument ():
@@ -65,7 +67,8 @@ def no_argument ():
 
 
 def tstmst_func (tstmst):
-    if   sys.argv[1]=='sfr'    : sfr_vars (tstmst,sys.argv[2],'sfr')
+    if   sys.argv[1]=='rev'    : sfr_vars (tstmst,'name','str')
+    elif sys.argv[1]=='sfr'    : sfr_vars (tstmst,sys.argv[2],'sfr')
     elif sys.argv[1]=='vars'   : sfr_vars (tstmst,sys.argv[2] if len(sys.argv)>2 else "", \
                                                   sys.argv[3] if len(sys.argv)>3 else "");
     elif sys.argv[1]=='adc'    : print(tstmst.get_adc10 (argv_hex[2]))

@@ -169,7 +169,7 @@ class nvm (object):
             print('SEGM: %3d, %3d ---' % (ptr, len(temp['data'])),end='')
             me.nvmprog (temp)
 
-            if wait==0: print()
+            if wait==0: print
             ptr = ptr+(1+intr) if ptr+(1+intr) < num \
                        else (ptr+1) % (1+intr) # wrap around
 
@@ -193,7 +193,7 @@ class nvm (object):
             temp['start'] = (ii + num*intr) % 0x4000
             temp['end'] = temp['start'] + len(temp['data'])
             me.nvmprog (temp)
-            print()
+            print
 
 
     def nvmsum15 (me, param):
@@ -205,12 +205,12 @@ class nvm (object):
         """
         assert param['start'] < param['end'], 'invalid end address'
         (hi,lo,sum) = (0,0,0)
-        print 'summation from 0x%04x to 0x%04x' % (param['start'],param['end']-1)
+        print('summation from 0x%04x to 0x%04x' % (param['start'],param['end']-1))
         if 'file' in param:
             rdat = param['data'][param['start']:]
             if 'tcode' in param:
                 sum = -(~(int(param['tcode'],16)+0x7f00))
-                print 'summation with TCODE_%02X' % (int(param['tcode'],16)) # CAN1123A0: FB
+                print('summation with TCODE_%02X' % (int(param['tcode'],16))) # CAN1123A0: FB
         else:
             rdat = me.nvm_block_read (param['start'],param['end']-param['start'])
 
@@ -220,20 +220,20 @@ class nvm (object):
                 sum += lo + (hi*256 if hi<0x80 else (hi-0x80)*256 + 1)
                 sum %= 256*128
                 if not 'no_note' in param:
-                    print '0x%04x:' % (param['start']+ii-1),
-                    print '%02x %02x => %02x %02x =>' % (rdat[ii],rdat[ii-1],lo,hi),
-                    print '0x%04x (%d)' % (sum,sum)
+                    print('0x%04x:' % (param['start']+ii-1),end='')
+                    print('%02x %02x => %02x %02x =>' % (rdat[ii],rdat[ii-1],lo,hi),end='')
+                    print('0x%04x (%d)' % (sum,sum))
             else:
                 lo = (~rdat[ii])%256
 
         if param['end']%2: # to support odd number end address
             sum += lo
             sum %= 256*128
-            print '0x%04x:' % (param['start']+ii),
-            print '%02x => %02x' % (rdat[ii],lo)
+            print('0x%04x:' % (param['start']+ii),end='')
+            print('%02x => %02x' % (rdat[ii],lo))
 
-        print '0x%04x (%d)' % (sum,sum)
-        print '0x%04x => 0x%04x' % ((-sum)%(256*128),(~(-sum))%(256*256))
+        print('0x%04x (%d)' % (sum,sum))
+        print('0x%04x => 0x%04x' % ((-sum)%(256*128),(~(-sum))%(256*256)))
 
 
     def nvmargv (me, argvlst):
@@ -276,7 +276,7 @@ class nvm (object):
         """
         if dat != exp:
             if num == limit: print('suppress further display...',end='')
-            elif num < limit: print()
+            elif num < limit: print
             if num  < limit: print('0x%04X : %02X %c (!=%02X)' \
                % (adr, dat, chr(dat) if chr(dat)>' ' and dat<128 else ' ', exp),end='')
             return 1

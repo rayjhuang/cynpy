@@ -11,26 +11,26 @@ class atm (nvm):
     '''
 
     def pg0_fill (me, bnk=-1, dat=0, msk=0x10): # bnk=-1 for all bank
-        print me.sfrwi, '%d 0x%02x 0x%02x' % (bnk,dat,msk)
+        print(me.sfrwi, '%d 0x%02x 0x%02x' % (bnk,dat,msk))
         for bb in range(me.sfr.sramsz/128) if bnk==-1 else [bnk]:
-            print 'fill bank %0d of PG0' % bb
+            print('fill bank %0d of PG0' % bb)
             sav = me.sfrrx (me.sfr.I2CCTL,1)[0]
             me.sfrwx (me.sfr.I2CCTL,[(sav&0x01)|(bb<<1)|msk])
             for ali in range(0,0x7f,0x10):
                 me.sfrwi (ali,[dat]*16)
         
     def pg0_form (me, bnk=-1): # bnk=-1 for all bank
-        print me.sfrri, '%d\npg0_dump:' % (bnk)
+        print(me.sfrri, '%d\npg0_dump:' % (bnk))
         for bb in range(me.sfr.sramsz/128) if bnk==-1 else [bnk]:
             sav = me.sfrrx (me.sfr.I2CCTL,1)[0]
             me.sfrwx (me.sfr.I2CCTL,[(sav&0x01)|(bb<<1)])
             for ali in range(0,0x7f,0x10):
-                print '%1x:0x%02x:' % (bb,ali),
+                print('%1x:0x%02x:' % (bb,ali),end='')
                 r_dat = me.sfrri (ali,16)
                 assert len(r_dat)==(16), 'sfr read failed'
                 for ii in range(0x10):
-                    if (ii&0x07==0 and ii>0): print ' ',
-                    print '%02x' % r_dat[ii],
+                    if (ii&0x07==0 and ii>0): print(' ',end='')
+                    print('%02x' % r_dat[ii],end='')
                 print
 
     def sfr_form (me, adr, cnt=16):
@@ -76,7 +76,7 @@ class atm (nvm):
             print('0x%04x:' % ofs,end=' ')
             r_dat = me.nvmrx (cnt)
             for i in range(cnt): print('%02x' % r_dat[i],end=' ')
-            print()
+            print
         else:
             print('nvm_form: 0x%04x, %0d' %(ofs,cnt))
             s_pos = ofs&0x0f
@@ -125,8 +125,8 @@ class atm (nvm):
                     if r_dat>r_max: r_max = r_dat
 #                   r_cnt[r_avg[i]] += 1
 #               print(r_avg,end=' ')
-#               print("%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),end=' ')
-                print("%3d %3d %3d"    % (r_min,r_sum/n_avg,r_max),end=' ')
+                print("%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),end=' ')
+#               print("%3d %3d %3d"    % (r_min,r_sum/n_avg,r_max),end=' ')
                 cnt += 1
             except:
                 print("--",end='')
