@@ -25,13 +25,13 @@ class atm (nvm):
             sav = me.sfrrx (me.sfr.I2CCTL,1)[0]
             me.sfrwx (me.sfr.I2CCTL,[(sav&0x01)|(bb<<1)])
             for ali in range(0,0x7f,0x10):
-                print('%1x:0x%02x:' % (bb,ali),end='')
+                print('%1x:0x%02x:' % (bb,ali),end=' ')
                 r_dat = me.sfrri (ali,16)
                 assert len(r_dat)==(16), 'sfr read failed'
                 for ii in range(0x10):
                     if (ii&0x07==0 and ii>0): print(' ',end='')
-                    print('%02x' % r_dat[ii],end='')
-                print
+                    print('%02x' % r_dat[ii],end=' ')
+                print()
 
     def sfr_form (me, adr, cnt=16):
         print(me.sfrri, adr)
@@ -76,7 +76,7 @@ class atm (nvm):
             print('0x%04x:' % ofs,end=' ')
             r_dat = me.nvmrx (cnt)
             for i in range(cnt): print('%02x' % r_dat[i],end=' ')
-            print
+            print()
         else:
             print('nvm_form: 0x%04x, %0d' %(ofs,cnt))
             s_pos = ofs&0x0f
