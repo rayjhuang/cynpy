@@ -7,7 +7,7 @@ if __name__ == '__main__':
     '''
     import sys, time
     import basic as cmd
-    if not cmd.no_argument ():
+    if cmd.chk_argument ():
         import i2c
         i2cmst = i2c.choose_master ()
         if i2cmst:
@@ -34,6 +34,12 @@ if __name__ == '__main__':
 
                 print '[ESC]'
                 tstmst.prltx.pop () # recover PRLTX settings
+
+            elif sys.argv[1]=='61':
+                import sfrmst
+                tstmst = sfrmst.tsti2c(busmst=i2cmst, deva=0x61)
+                cmd.pop_argument ()
+                cmd.tstmst_func (tstmst)
 
             else:
                 import sfrmst

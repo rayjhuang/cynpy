@@ -89,7 +89,7 @@ class spinvm (aardvark_spi):
 if __name__ == '__main__':
 
     from basic import *
-    if not no_argument ():
+    if chk_argument ():
         if   sys.argv[1]=='ver'    : spinvm(0).aaShowVersion ()
         elif sys.argv[1]=='dump'   : spinvm(0).dump (argv_hex[2],argv_hex[3])
         elif sys.argv[1]=='erase'  : spinvm(0).sector_erase (argv_hex[2])

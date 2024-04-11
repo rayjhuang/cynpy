@@ -10,7 +10,7 @@ if __name__ == '__main__':
 
     import sys
     import basic as cmd
-    if not cmd.no_argument ():
+    if cmd.chk_argument ():
         if i2cmst:
             import canm0
             if sys.argv[1]=='q' or \

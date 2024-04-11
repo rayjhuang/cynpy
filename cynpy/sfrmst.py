@@ -1,6 +1,57 @@
 
-from can11xx import cani2c
+TRUE  = 1 # ACK, YES
+FALSE = 0 # NAK, NO
+
 from atm import atm
+
+class generic_i2c (atm): # generic I2C master
+    def __init__ (me, busmst, deva, rpt=0):
+        me.deva = deva
+        me.busmst = busmst # SFR master (I2C)
+
+    def is_master_rdy (me):
+        ''' Is this master ready for issuing things?
+        '''
+        return TRUE if me.busmst else FALSE
+
+    def sfrwx (me, adr, wdat):
+        return me.busmst.write (me.deva, adr, wdat)
+
+    def sfrrx (me, adr, cnt):
+        return me.busmst.read (me.deva, adr, cnt, FALSE)
+
+    def sfrri (me, adr, cnt):
+        ''' Can be improved if the slave support INC mode
+        '''
+        rdat = []
+        for xx in range(cnt):
+            rdat += me.busmst.read (me.deva, adr+xx, 1)
+        return rdat
+
+    def sfrwi (me, adr, wdat):
+        ''' Can be improved if the slave support INC mode
+        '''
+        ret = 0
+        for xx in range(len(wdat)):
+            ret += me.busmst.write (me.deva, adr, wdat[xx])
+        return ret
+
+
+
+from can11xx import can11xx
+
+class cani2c (generic_i2c, can11xx):
+    def __init__ (me, busmst, deva, rpt=0):
+        generic_i2c.__init__ (busmst, deva, rpt)
+        can11xx.__init__ (me) # SFR target
+
+        if me.sfr.revid:
+            if rpt:
+                print 'I2C master finds %s, 0x%02x' % (me.sfr.name, me.deva)
+            if me.sfr.inc == 1: # CAN1108/11
+                me.sfrwx (me.sfr.I2CCTL, [me.sfrrx (me.sfr.I2CCTL,1)[0] | 0x01]) # we'll work in NINC mode
+
+
 
 class tsti2c (cani2c, atm):
     pass

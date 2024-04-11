@@ -1,0 +1,38 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_test_vout.txt
+# PURPOSE:
+#  test VOUT_COMMAND of MPQ4245
+# 20240411 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   deva  61
+
+## CLEAR_FAULTS
+   write 3
+
+## chaeck status
+   read  10     # WRITE_PROTECT
+   read  7E     # STATUS_CML
+   read  21 2   # VOUT_COMMAND
+
+## 3-byte VOUT_COMMAND write
+   write 21 11 22 33
+   read  7E     # STATUS_CML
+   read  21 2   # VOUT_COMMAND
+   write 3
+
+## 1-byte VOUT_COMMAND write
+   write 21 15
+   read  7E     # STATUS_CML
+   read  21 2   # VOUT_COMMAND
+   write 3
+
+## normal 2-byte VOUT_COMMAND write
+   write 21 44 14
+   read  7E     # STATUS_CML
+   read  21 2   # VOUT_COMMAND
+   write 3

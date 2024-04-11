@@ -5,9 +5,9 @@ class can11xx (object):
     '''
     can11xx hierarchy
     -----------------                                     canm0
-                                                   {sfr  /
-                                                   updrpl - ams ~ ~
-                                            {i2c  /               |
+                                {i2c               {sfr  /
+                                generic_i2c        updrpl - ams ~ ~
+                                           \      /               |
             sfr1108                         cani2c - - - tsti2c   ~ isp
            /                               /            /
     sfr11xx - sfr111x - sfr1110  }  can11xx    nvm - atm 
@@ -29,12 +29,11 @@ class can11xx (object):
                 elif sfr1124().check (revid): me.sfr = sfr1124(revid)
                 elif sfr1125().check (revid): me.sfr = sfr1125(revid)
                 else:
-
-                    me.sfr = sfr11xx()
                     print 'un-recognized REVID: 0x%02x' % revid
-#               print me.sfr
+            else:
+                print 'ERROR: REVID not found'
 #       else:
-#           print 'master is not ready'
+#           print 'ERROR: master is not ready'
 
 
     def is_master_rdy (me): raise NotImplementedError()
@@ -48,57 +47,14 @@ class can11xx (object):
 
     def get_revid (me):
         sav = me.sfrrx (me.sfr.DEC, 1) # try slave
+#       sav = [] # don't try-slave
         if len(sav): # data returned
             me.sfrwx (me.sfr.DEC, [me.sfr.REVID])
             revid = \
             me.sfrrx (me.sfr.REVID, 1)[0] & 0x7f
             me.sfrwx (me.sfr.DEC, [sav[0]])
             return revid
-        return 0
-
-
-
-class cani2c (can11xx):
-    def __init__ (me, busmst, deva, rpt=0):
-        me.deva = deva
-        me.busmst = busmst # SFR master (I2C)
-
-        can11xx.__init__ (me) # SFR target
-
-        if me.sfr.revid:
-            if rpt:
-                print 'I2C master finds %s, 0x%02x' % (me.sfr.name, me.deva)
-            if me.sfr.inc == 1: # CAN1108/11
-                me.sfrwx (me.sfr.I2CCTL, [me.sfrrx (me.sfr.I2CCTL,1)[0] | 0x01]) # we'll work in NINC mode
-
-
-    def is_master_rdy (me):
-        ''' Is this master ready for issuing things?
-        '''
-        return TRUE if me.busmst else FALSE
-
-
-    def sfrwx (me, adr, wdat):
-        return me.busmst.write (me.deva, adr, wdat)
-
-
-    def sfrrx (me, adr, cnt):
-        return me.busmst.read (me.deva, adr, cnt, FALSE)
-
-
-    def sfrri (me, adr, cnt):
-        sav = me.sfrrx (me.sfr.I2CCTL, 1)[0]
-        setinc = sav & 0xfe if me.sfr.inc else sav | 0x01
-        me.sfrwx (me.sfr.I2CCTL, [setinc]) # INC mode
-        rdat = me.busmst.read (me.deva, adr, cnt)
-        me.sfrwx (me.sfr.I2CCTL, [sav])
-        return rdat
-
-    def sfrwi (me, adr, wdat):
-        sav = me.sfrrx (me.sfr.I2CCTL, 1)[0]
-        setinc = sav & 0xfe if me.sfr.inc else sav | 0x01
-        me.sfrwx (me.sfr.I2CCTL, [setinc]) # INC mode
-        ret = me.busmst.write (me.deva, adr, wdat)
-        me.sfrwx (me.sfr.I2CCTL, [sav])
-        return ret
+        else:
+            print 'ERROR: no data returned'
+            return 0
 

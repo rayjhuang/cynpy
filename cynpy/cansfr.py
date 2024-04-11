@@ -77,7 +77,7 @@ class sfr11xx (object):
     def __init__ (me, revid=0):
         me.bufsz = 34 # -byte FIFO
         me.name = ''
-        me.inc = 0 # CAN1110/2 power-on I2CSLV in non-INC mode
+        me.inc = 0
         me.revid = revid
         if revid:
             me.name = me.dict_id [revid]
@@ -303,6 +303,7 @@ class sfr1110 (sfr111x):
 
     def __init__ (me, revid=0):
         super(sfr1110,me).__init__ (revid)
+        me.inc = 0 # CAN1110 power-on I2CSLV in non-INC mode
         me.nbyte = 1
         me.dummy = 3
         me.nvmsz = 0x2000
@@ -351,6 +352,7 @@ class sfr1112 (sfr111x):
 
     def __init__ (me, revid=0):
         super(sfr1112,me).__init__ (revid)
+        me.inc = 0 # CAN1112 power-on I2CSLV in non-INC mode
         me.nbyte = 2
         me.dummy = 2
         me.nvmsz = 0x4200
@@ -378,8 +380,7 @@ class sfr1124 (sfr1112):
 
     dict_id = {0x2e:'CAN1124A0', \
                0x2f:'CAN1124B0', \
-               0x30:'CAN1126A0', \
-               0x31:'CAN1127A0'}
+               0x30:'CAN1126A0'}
 
     def __init__ (me, revid=0):
         super(sfr1124,me).__init__ (revid)
@@ -433,6 +434,7 @@ class sfr1125 (sfr1108):
 
     def __init__ (me, revid=0):
         super(sfr1125,me).__init__ (revid)
+        me.inc = 0 # CAN1125 power-on I2CSLV in non-INC mode
         me.nbyte = 1
         me.nvmsz = 0x1020
         me.nvmmsk = 0x0fff # address width

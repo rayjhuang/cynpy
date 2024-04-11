@@ -14,7 +14,7 @@ class i2c (object): # for polymorphism
     
     '''
     def enum (me): raise NotImplementedError()
-    def baud (me, ask): raise NotImplementedError()
+    def baud (me, ask=0): raise NotImplementedError()
     def i2cw (me, wdat): raise NotImplementedError()
     def read (me, dev, adr, rcnt, rpt=FALSE): raise NotImplementedError()
 
@@ -26,7 +26,7 @@ class i2c (object): # for polymorphism
         hit = []
         for dev in range(0x80):
 
-            if me.i2cw ([dev]):
+            if me.i2cw ([dev])==(0,0): # aa_i2c_write_ext returns
                 print 'device 0x%02x found' % (dev)
                 hit += [dev]
         return hit
@@ -52,16 +52,35 @@ def choose_master (rpt=FALSE):
 
 if __name__ == '__main__':
 
-    from basic import *
-    if not no_argument ():
+    import basic as cmd
+    import sys
+
+    def i2c_dispatch (tstmst):
+        rtn = sys.argv[1]
+        if   sys.argv[1]=='probe' : print i2cmst.probe ()
+        elif sys.argv[1]=='baud'  : print i2cmst.baud (cmd.argv_dec[2]) if len(sys.argv)>2 else i2cmst.baud ()
+        elif sys.argv[1]=='i2cw'  : print i2cmst.i2cw (cmd.argv_hex[2:])[1]
+        elif sys.argv[1]=='i2cr'  : print ['0x%02X' % xx for xx in \
+                                    i2cmst.read (cmd.argv_hex[2], cmd.argv_hex[3], cmd.argv_hex[4])]
+        elif sys.argv[1]=='dump'  or \
+             sys.argv[1]=='write' or \
+             sys.argv[1]=='read'  : cmd.basic_dispatch (tstmst)   # used in cynpy command files
+        elif sys.argv[1]=='deva'  : tstmst.deva = cmd.argv_hex[2] # used in cynpy command files
+        elif sys.argv[1]=='test'  : i2cmst.test (cmd.argv_hex[2], cmd.argv_hex[3])
+        else: rtn = 'none'
+        return rtn
+
+    if cmd.chk_argument ():
         i2cmst = choose_master (rpt=TRUE)
-        if i2cmst!=0:
-            if   sys.argv[1]=='probe' : print i2cmst.probe ()
-            elif sys.argv[1]=='baud'  : print i2cmst.baud (argv_dec[2])
-            elif sys.argv[1]=='write' : print i2cmst.i2cw (argv_hex[2:])[1]
-            elif sys.argv[1]=='read'  : print ['0x%02X' % xx for xx in i2cmst.read (argv_hex[2], argv_hex[3], argv_hex[4])]
-            elif sys.argv[1]=='test'  : i2cmst.test (argv_hex[2], argv_hex[3])
-            else: print "command not recognized"
+        if i2cmst:
+            deva = 0x70 # default for can11xx
+            assign = sys.argv[1].split('=')
+            if len(assign)==2:
+                if assign[0]=='deva': deva = int(assign[1],16)
+                cmd.pop_argument ()
+            from sfrmst import generic_i2c
+            tstmst = generic_i2c (busmst=i2cmst, deva=deva)
+            cmd.tstmst_func (tstmst, i2c_dispatch)
         else:
             print "I2C master not found"
 

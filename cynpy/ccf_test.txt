@@ -1,0 +1,13 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B *.py ccf_test.txt
+# PURPOSE:
+#  debugging
+# 20240411 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   i2cw  61 21 22 15
+   i2cr  61 21 2

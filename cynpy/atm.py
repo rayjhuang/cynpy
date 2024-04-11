@@ -101,7 +101,17 @@ class atm (nvm):
         me.sfrwx (me.sfr.DEC, [(ofs+cnt)>>8]) # clear ACK
 
 
-    def scope_sfr (me, adr, n_avg=1): # read and print the variation
+    def linear16 (me, word): # 16-bit to LINEAR16(N=-10) floating point
+        return float(word)/2**10
+
+    def linear11 (me, word): # 16-bit to LINEAR11 floating point
+        exp = word/2**11
+        exp -= 2**5 if exp>=2**4 else 0
+        man = word%2**11
+        man -= 2**11 if exp>=2**10 else 0
+        return float(man*2**exp)
+        
+    def scope_sfr (me, adr, n_avg=1, typ=1): # read and print the variation
         assert n_avg > 0, 'avg number is at least 1'
         import KBHit
         kb = KBHit.KBHit ()
@@ -109,24 +119,32 @@ class atm (nvm):
         print 'looped read (avg=%d), press any key.....' % n_avg
         cnt = 0
         r_avg = [0] * n_avg
-        r_min = 0xff
+        r_min = 0xffff
         r_max = 0
         while 1:
             print "\r0x%02x(%03d):" % (adr,cnt),
             try:
-                r_dat = me.sfrrx (adr,1)[0]
+                r_dat = me.sfrrx (adr,1) if typ==1 else \
+                        me.sfrrx (adr,2) # word
+                num = r_dat[0]
+                num += r_dat[1]*256 if typ>1 else 0
                 r_avg.pop()
-                r_avg.insert(0,r_dat)
-#               r_cnt = [0] * 256
+                r_avg.insert(0,num)
                 r_sum = 0
                 for i in range(n_avg):
                     r_sum += r_avg[i]
-                    if r_dat<r_min: r_min = r_dat
-                    if r_dat>r_max: r_max = r_dat
-#                   r_cnt[r_avg[i]] += 1
-#               print r_avg,
-                print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
-#               print "%3d %3d %3d"    % (r_min,r_sum/n_avg,r_max),
+                    if num<r_min: r_min = num
+                    if num>r_max: r_max = num
+                if typ==1: print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
+                if typ==2: print "%04x %04x %04x" % (r_min,r_sum/n_avg,r_max),
+                if typ==3: #L11
+                    print "%3.3f %3.3f %3.3f" % (me.linear11 (r_min), \
+                                                 me.linear11 (r_sum/n_avg), \
+                                                 me.linear11 (r_max)),
+                if typ==4: #L16
+                    print "%3.3f %3.3f %3.3f" % (me.linear16 (r_min), \
+                                                 me.linear16 (r_sum/n_avg), \
+                                                 me.linear16 (r_max)),
                 cnt += 1
             except:
                 print "--",
@@ -155,7 +173,13 @@ class atm (nvm):
                 cnt += 1
 
       
-    def loop_read (me, plist): # looped read and print
+    def loop_read_1 (me, plist): # looped read and print (byte)
+        me.loop_read (1, plist)
+        
+    def loop_read_2 (me, plist): # looped read and print (word)
+        me.loop_read (2, plist)
+        
+    def loop_read (me, nbyte, plist): # looped read and print
         if (len(plist)>0):
             import KBHit
             kb = KBHit.KBHit ()
@@ -166,8 +190,9 @@ class atm (nvm):
                 print "\r%0d:" % cnt,
                 for xx in range (len(plist)):
                     try:
-                        r_dat = me.sfrrx (int(plist[xx],16),1)[0]
-                        print " %02x:0x%02x" %(int(plist[xx],16),r_dat),
+                        r_dat = me.sfrrx (int(plist[xx],16),nbyte)
+                        if nbyte==1: print " %02x:0x%02x" %(int(plist[xx],16),r_dat[0]),
+                        if nbyte==2: print " %02x:0x%04x" %(int(plist[xx],16),r_dat[0]+r_dat[1]*256),
 #                       print " %02x: %3d" %(int(plist[xx],16),r_dat),
                     except:
                         print " %02x: --" %(int(plist[xx],16)),

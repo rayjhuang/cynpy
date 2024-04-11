@@ -1,0 +1,31 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_test_i2c.txt
+# PURPOSE:
+#  test i2c.py
+# 20240411 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+## information
+   probe
+   baud
+
+## i2cmst I2C read/write (fixed address, 0x61)
+   i2cr  61 21 2   
+   i2cw  61 21 11 15
+   i2cr  61 21 2   
+   i2cw  61 21 33 17
+   i2cr  61 21 2   
+
+## set slave address for tstmst
+   deva  61
+
+## tstmst I2C read/write
+   read  21 2
+   write 21 11 15
+   read  21 2
+   write 21 22 16
+   read  21 2

@@ -177,8 +177,7 @@ if __name__ == '__main__':
                            int(sys.argv[4])): print('0x%02X' % xx)
         
     from basic import *
-
-    if not no_argument ():
+    if chk_argument ():
         if   sys.argv[1]=='ver'   : aardvark(0).aaShowVersion ()
         elif sys.argv[1]=='enum'  : aardvark().enum (rpt=TRUE)
         elif sys.argv[1]=='sw'    : aardvark(0).aaSwitchTargetPower ()
