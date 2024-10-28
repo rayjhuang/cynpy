@@ -1,0 +1,28 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py deva=61 d 0 100
+#> python -B i2c.py ccf_mpq4245_dump.txt
+# PURPOSE:
+#  dump registers of MPQ4245
+# 20240411 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   deva  61
+
+## CLEAR_FAULTS
+   write 3
+
+## dump all bytes
+   dump 0 100
+   write 3
+
+## dump words
+   read 79 2	# STATUS_WORD
+   read 88 2	# READ_VIN
+   read 8B 2	# READ_VOUT
+   read 8C 2	# READ_IOUT
+   read 8D 2	# READ_TEMPERATURE
+   read 7E      # STATUS_CML

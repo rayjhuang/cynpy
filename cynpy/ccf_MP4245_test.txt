@@ -1,0 +1,68 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_MP4245_test.txt
+# PURPOSE:
+#  soft start of MP4245
+# 20240423 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   deva  61
+
+## initial states
+   read  01       # OPERATION
+   read  10       # WRITE_PROTECT
+   read  20       # VOUT_MODE
+   read  21 2     # VOUT_COMMAND
+   read  29 2     # VOUT_SCALE_LOOP
+   read  78       # STATUS_BYTE
+   read  79 2     # STATUS_WORD
+   read  7A       # STATUS_VOUT
+   read  7C       # STATUS_INPUT
+   read  7D       # STATUS_TEMPERATURE
+   read  7E       # STATUS_CML
+   read  88 2     # READ_VIN
+   read  8B 2     # READ_VOUT
+   read  8C 2     # READ_IOUT
+   read  8D 2     # READ_TEMPERATURE
+   read  D0       # MFR_MODE_CTRL
+   read  D1       # MFR_CURRENT_LIMIT
+   read  D2       # MFR_LINE_DROP_COMP
+   read  D3       # MFR_OT_FAULT_LIMIT
+   read  D4       # MFR_OT_WARN_LIMIT
+   read  D5       # MFR_CRC_Error_FLAG
+   read  D6       # MFR_MTP_CONFIGURATION_CODE
+   read  D7       # MFR_MTP_REVISION_NUMBER
+   read  D8       # MFR_STATUS_MASK
+
+## initialize
+   write 01 00    # OPERATION
+   write D0 2A    # MFR_MODE_CTRL
+   write 03       # CLEAR_FAULTS
+   write D8 F7    # MFR_STATUS_MASK
+   write 21 00 20 # VOUT_COMMAND
+   write 03       # CLEAR_FAULTS
+   write 01 80    # OPERATION
+
+## BUSY
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+
+## start testing
+   write 03       # CLEAR_FAULTS
+   write 21 00 14 # VOUT_COMMAND
+
+   read  79 2     # STATUS_WORD
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+   write 21 00 20 # VOUT_COMMAND
+
+   read  79 2     # STATUS_WORD
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+   write 01 00
+   read  79 2     # STATUS_WORD

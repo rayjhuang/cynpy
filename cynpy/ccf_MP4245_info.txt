@@ -1,0 +1,64 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_MP4245_test.txt
+# PURPOSE:
+#  check initial states and status of MP4245
+# 20241023 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+## SHOW_CMD_WHOLE
+   deva  61
+   write 03       # CLEAR_FAULTS
+
+# STATUS_CML[7] Invalid Or Unsupported Command Received
+#  read  11       # STORE_DEFAULT_ALL
+#  read  12       # RESTORE_DEFAULT_ALL
+#  read  7F       # STATUS_OTHER
+#  read  8E 2     # READ_TEMPERATURE_2
+#  :
+
+# STATUS_CML[1] A communication fault other than the ones listed in this table has occurred
+#  read  03       # CLEAR_FAULTS
+#  read  15       # STORE_USER_ALL
+#  read  16       # RESTORE_USER_ALL
+#  read  7A 2     # STATUS_VOUT
+#  :
+
+# no status
+#  read  88       # READ_VIN
+
+##
+## SHOW_CMD_OFF
+## all readable commands
+   read  01       # OPERATION
+   read  10       # WRITE_PROTECT
+   read  20       # VOUT_MODE
+   read  21 2     # VOUT_COMMAND
+   read  29 2     # VOUT_SCALE_LOOP
+   read  78       # STATUS_BYTE
+   read  79 2     # STATUS_WORD
+   read  7A       # STATUS_VOUT
+   read  7B       # STATUS_IOUT (not in MP4230)
+   read  7C       # STATUS_INPUT
+   read  7D       # STATUS_TEMPERATURE
+   read  7E       # STATUS_CML
+   read  88 2     # READ_VIN
+   read  8B 2     # READ_VOUT
+   read  8C 2     # READ_IOUT
+   read  8D 2     # READ_TEMPERATURE_1
+   read  D0       # MFR_MODE_CTRL
+   read  D1       # MFR_CURRENT_LIMIT
+   read  D2       # MFR_LINE_DROP_COMP
+   read  D3       # MFR_OT_FAULT_LIMIT
+   read  D4       # MFR_OT_WARN_LIMIT
+   read  D5       # MFR_CRC_Error_FLAG
+   read  D6       # MFR_MTP_CONFIGURATION_CODE
+   read  D7       # MFR_MTP_REVISION_NUMBER
+   read  D8       # MFR_STATUS_MASK
+
+##
+## SHOW_CMD_ON
+   write 03       # CLEAR_FAULTS

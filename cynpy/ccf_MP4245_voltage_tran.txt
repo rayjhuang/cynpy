@@ -1,0 +1,41 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_MP4245_voltage_tran.txt
+# PURPOSE:
+#  voltage transition of MP4245
+# 20240422 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   deva  61
+
+## check initial values
+   write 03     # CLEAR_FAULTS
+   read  01	# OPERATION
+   write 01 00
+   read  21 2	# VOUT_COMMAND=0x1400
+   read  29 2	# VOUT_SCALE_LOOP=0xB052
+   read  88 2	# READ_VIN
+   read  8B 2	# READ_VOUT
+   read  8B 2	# READ_VOUT
+   write 01 80
+
+## BUSY
+   write 21 00 20 # VOUT_COMMAND=8V
+   read  78
+   write 03     # CLEAR_FAULTS
+
+   read  8B 2	# READ_VOUT
+   read  8B 2	# READ_VOUT
+
+## VOUT_COMMAND
+   write 21 00 20 # VOUT_COMMAND=8V
+   read  8B 2	# READ_VOUT
+   read  8B 2	# READ_VOUT
+   read  8B 2	# READ_VOUT
+   write 21 00 14 # VOUT_COMMAND=5V
+   write 21 00 20 # VOUT_COMMAND=8V
+   write 21 00 14 # VOUT_COMMAND=5V
+   read  78

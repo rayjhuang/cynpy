@@ -116,7 +116,7 @@ class atm (nvm):
         import KBHit
         kb = KBHit.KBHit ()
         print me.sfrrx
-        print 'looped read (avg=%d), press any key.....' % n_avg
+        print 'scope read (avg=%d), press any key.....' % n_avg
         cnt = 0
         r_avg = [0] * n_avg
         r_min = 0xffff
@@ -128,13 +128,13 @@ class atm (nvm):
                         me.sfrrx (adr,2) # word
                 num = r_dat[0]
                 num += r_dat[1]*256 if typ>1 else 0
+                if num<r_min: r_min = num
+                if num>r_max: r_max = num
                 r_avg.pop()
                 r_avg.insert(0,num)
                 r_sum = 0
                 for i in range(n_avg):
                     r_sum += r_avg[i]
-                    if num<r_min: r_min = num
-                    if num>r_max: r_max = num
                 if typ==1: print "%02x %02x %02x" % (r_min,r_sum/n_avg,r_max),
                 if typ==2: print "%04x %04x %04x" % (r_min,r_sum/n_avg,r_max),
                 if typ==3: #L11
@@ -146,17 +146,10 @@ class atm (nvm):
                                                  me.linear16 (r_sum/n_avg), \
                                                  me.linear16 (r_max)),
                 cnt += 1
+                print "%0s" % (" "*10),
             except:
                 print "--",
             if kb.kbhit (): break
-
-
-    def multi_write (me, args, verbose=1): # addr=wdat pairs
-        assert len(args) > 0, 'addr=wdat pair is a must'
-        for it in args[0:]:
-            [adr_h, dat_h] = it.split('=')
-            rs = me.sfrwx (int(adr_h,16),[int(dat_h,16)])
-            if verbose: print rs
 
 
     def loop_write (me, plist): # looped writing

@@ -1,5 +1,5 @@
 
-from can11xx import cani2c, TRUE, FALSE
+from sfrmst import cani2c, TRUE, FALSE
 
 class updprl (cani2c):
     '''
@@ -31,24 +31,21 @@ class updprl (cani2c):
         super(updprl, me).__init__ (i2cmst, deva)
 
         me.prltx = sfr(me, me.sfr.PRLTX, -1)
-        me.txctl = sfr(me, me.sfr.TXCTL, -1, TRUE)
 
-        me.sfrwx (me.sfr.RXCTL,[0x7f])
+        me.sfrwx (me.sfr.RXCTL,[0x7f]) # litsening all
 
 
     def ordered_set (me, hr):
-        me.txctl.psh (0x48) # disable SOP/EOP, enable encode K-code
         ordrs = [0x55,0x65] if hr else [0x15,0x35] # RST-1,RST-1, RST-1,RST-2  : Hard Reset
-        me.sfrwx (me.sfr.FFCTL,[0x40]) # first     # RST-1,Sync-1,RST-1,Sync-3 : Cable Reset
-        me.sfrwx (me.sfr.FFSTA,[0x00]) # clear FIFO
+                                                   # RST-1,Sync-1,RST-1,Sync-3 : Cable Reset
+        me.sfrwx (me.sfr.TXCTL,[0x48]) # disable SOP/EOP, enable encode K-code
         me.sfrwx (me.sfr.STA1, [0xff]) # clear STA1
-        me.sfrwx (me.sfr.FFIO, [ordrs[0]])
-        me.sfrwx (me.sfr.FFCTL,[0x82]) # last, 2-byte K-code
-        me.sfrwx (me.sfr.FFIO, [ordrs[1]])
+        me.sfrwx (me.sfr.FFSTA,[0x00]) # clear FIFO
+        me.sfrwx (me.sfr.FFCTL,[0x40]); me.sfrwx (me.sfr.FFIO, [ordrs[0]]) # first
+        me.sfrwx (me.sfr.FFCTL,[0x82]); me.sfrwx (me.sfr.FFIO, [ordrs[1]]) # last, 2-byte K-code
         sta1 = me.sfrrx (me.sfr.STA1,1)[0]
         if (sta1&0x30)==0x10: print 'ORDRS = %s' % ('CableReset','HardReset')[hr]
         else:                 print "--- DISCARDED ---, %02X"%sta1
-        me.txctl.pop()
 
 
     def compose_msg (me, msgtype, DO=[]):
@@ -72,12 +69,9 @@ class updprl (cani2c):
         me.sfrwx (me.sfr.FFSTA,[0x00]) # clear FIFO
         me.sfrwx (me.sfr.FFCTL,[0x40]); me.sfrwx (me.sfr.FFIO, me.TxBuffer[:-1]) # first
         me.sfrwx (me.sfr.FFCTL,[0x80]); me.sfrwx (me.sfr.FFIO, me.TxBuffer[-1:]) # last
-
         sta1 = me.sfrrx (me.sfr.STA1,1)[0]
-        if (sta1&0x30)==0x10: # check not discarded
-            return TRUE # success
-        else:
-            return FALSE # discarded
+        if (sta1&0x30)==0x10: return TRUE # success # check not discarded
+        else:                 return FALSE # discarded
 
 
     def msg_tx (me, msgtype, DO=[]):

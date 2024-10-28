@@ -1,0 +1,89 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_MP4245_pg_status.txt
+# PURPOSE:
+#  MP4245's behavior of PG_STATUS#
+# 20241023 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   deva  61
+##
+## check initial values
+   read  D0       # MFR_MODE_CTRL
+   read  D8       # MFR_STATUS_MASK
+   read  01       # OPERATION
+   write D8 f3    # MFR_STATUS_MASK
+   write 01 00
+   write 03       # CLEAR_FAULTS
+   read  21 2     # VOUT_COMMAND=0x1400
+   read  29 2     # VOUT_SCALE_LOOP=0xB052
+   read  88 2     # READ_VIN
+   read  8B 2     # READ_VOUT
+##@SHOW_CMD_OFF
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+   write 21 00 30 # VOUT_COMMAND=12V
+   write 01 80    # OPERATION
+   write 03       # CLEAR_FAULTS
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   write 03       # CLEAR_FAULTS
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   write 01 00    # OPERATION
+   write 03       # CLEAR_FAULTS
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+   read  79 2     # STATUS_WORD
+##@SHOW_CMD_ON
+   write 21 00 14 # VOUT_COMMAND=5V
+   write 01 80    # OPERATION
+##
+## BUSY (STATUS_BYTE[7])
+   write 21 00 20 # VOUT_COMMAND=8V
+   read  78       # STATUS_BYTE
+   write 03       # CLEAR_FAULTS
+
+   read  8B 2	# READ_VOUT
+##@ SHOW_CMD_OFF
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_ON
+##
+## VOUT_COMMAND
+   write 21 00 20 # VOUT_COMMAND=8V
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_OFF
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_ON
+
+   write 21 00 14 # VOUT_COMMAND=5V
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_OFF
+   read  8B 2     # READ_VOUT
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_ON
+
+   write 21 00 20 # VOUT_COMMAND=8V
+   write 21 00 14 # VOUT_COMMAND=5V
+   read  79 2     # STATUS_WORD
+   read  D8       # MFR_STATUS_MASK

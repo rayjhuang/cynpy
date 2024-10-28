@@ -1,0 +1,41 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B i2c.py ccf_MP4245_VOUT_SCALE_LOOP.txt
+# PURPOSE:
+#  VOUT_SCALE_LOOP of MP4245
+# 20240422 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+   deva  61
+   write 03       # CLEAR_FAULTS
+
+## check initial values
+   read  01       # OPERATION
+   read  21 2     # VOUT_COMMAND
+   read  29 2     # VOUT_SCALE_LOOP=0x052
+
+## modify VOUT_SCALE_LOOP and nothing happens
+   write 29 60 00
+   read  29 2	    # VOUT_SCALE_LOOP=0x060
+
+## clear/set OPERATION then VOUT_SCALE_LOOP=0x060 effects
+   write 01 00
+   read  88 2	    # READ_VIN
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_OFF
+   read  8B 2	    # READ_VOUT
+   read  8B 2	    # READ_VOUT
+##@ SHOW_CMD_WHOLE
+   write 01 80
+
+   read  8B 2     # READ_VOUT
+##@ SHOW_CMD_OFF
+   read  8B 2     # READ_VOUT
+   read  8B 2	    # READ_VOUT
+##@ SHOW_CMD_WHOLE
+   read  79 2     # STATUS_WORD
+
+#> python -B i2c.py deva=61 write 1=0 29=52 00 1=80

@@ -366,3 +366,41 @@ class ams (updprl):
         \r    '>'     : operating current (fixed/PPS)
         \r    '<'     : max. current (fixed)
         '''
+
+
+
+if __name__ == '__main__':
+    '''
+    % python -B ams.py
+    '''
+    import sys, time
+    import i2c
+    i2cmst = i2c.choose_master ()
+    if i2cmst:
+        import KBHit
+        kb = KBHit.KBHit ()
+        def check_kb ():
+            try:
+                return ord(kb.getch() if kb.kbhit() else '\x00')
+            except:
+                print 'key unknown'
+
+        tstmst = ams(i2cmst, 0x70, check_kb, time.sleep, 1)
+        '''
+        enable auto-TX/RX-GoodCRC
+        recover auto-TX/RX-GoodCRC setting
+        '''
+        tstmst.prltx.msk (0xff, 0x88) # enable auto-TX/RX-GoodCRC
+        print '[TX/%s]' % (tstmst.OrdrsType[tstmst.TxOrdrs])
+        print '[AMS_RX]'
+        while tstmst.main_loop () != 27:
+            pass
+
+        print '[ESC]'
+        tstmst.prltx.pop () # recover PRLTX settings
+
+        i2cmst.__del__()
+
+    else:
+        raise 'I2C master not found'
+

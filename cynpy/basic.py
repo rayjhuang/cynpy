@@ -19,7 +19,7 @@ def chk_argument ():
                 print line[start:].lstrip(),
             if line.find ('line')<0 and line.find ('% python')>=0:
                 cmd += '\n' + ' '.join(line.split()[0:])
-            if line.find ('line')<0 and line.find ('=basic_dispatch')>=0:
+            if line.find ('line')<0 and line.find ('tstmst_func (tstmst)')>=0:
                 tst += 1
 
         if tst>0:
@@ -71,19 +71,35 @@ def sfr_vars (tstmst,arg2="",arg3=""):
 
 
 def burst_write (tstmst):
+    ''' only for the comparison to the new general purpose version, multi_write
+        in case there's concerns about runing speed
+    '''
+    assert len(sys.argv) > 2, 'need argument(s)'
+    print tstmst.sfrwx (argv_hex[2], \
+                        argv_hex[3:] if len(sys.argv)>3 else [])
+
+
+def multi_write (tstmst):
     '''
     elif sys.argv[1]=='write'  : print tstmst.sfrwx (argv_hex[2],argv_hex[3:])
     elif sys.argv[1]=='w'      : tstmst.multi_write (sys.argv[2:])
     '''
-    if len(sys.argv)>=3:
-        if len(sys.argv[2].split('='))==2:
-            tstmst.multi_write (sys.argv[2:])
-        elif len(sys.argv)==3:
-            print tstmst.sfrwx (argv_hex[2],[])
+    assert len(sys.argv) > 2, 'need argument(s)'
+    addr = []
+    param = []
+    for it in sys.argv[2:]:
+        if len(it.split('='))==2: # addr=wdat pair
+            if len(addr) > 0:
+                print tstmst.sfrwx (addr[0],param) # multiple pairs
+            [adr_h, dat_h] = it.split('=')
+            addr = [int(adr_h,16)]
+            param = [int(dat_h,16)]
+        elif len(addr) > 0:
+            param += [int(it,16)]
         else:
-            print tstmst.sfrwx (argv_hex[2],argv_hex[3:])
-    else:
-        print 'ERROR: number of argument'
+            addr = [int(it,16)]
+
+    print tstmst.sfrwx (addr[0],param)
 
 
 def burst_read (tstmst):
@@ -111,8 +127,9 @@ def basic_dispatch (tstmst):
     elif sys.argv[1]=='vars'   : sfr_vars (tstmst,sys.argv[2] if len(sys.argv)>2 else "", \
                                                   sys.argv[3] if len(sys.argv)>3 else "");
     elif sys.argv[1]=='adc'    : print tstmst.get_adc10 (argv_hex[2])
-    elif sys.argv[1]=='read'   : burst_read (tstmst)
-    elif sys.argv[1]=='write'  : burst_write (tstmst)
+    elif sys.argv[1]=='read'   : burst_read  (tstmst)
+#   elif sys.argv[1]=='write'  : burst_write (tstmst)
+    elif sys.argv[1]=='write'  : multi_write (tstmst)
     elif sys.argv[1]=='loopw'  : tstmst.loop_write  (sys.argv[2:])
     elif sys.argv[1]=='loopwr' : tstmst.loop_w_r    (sys.argv[2:])
     elif sys.argv[1]=='loopr1' : tstmst.loop_read_1 (sys.argv[2:])
@@ -160,18 +177,26 @@ def basic_dispatch (tstmst):
 def tstmst_func (tstmst, dispatcher=basic_dispatch):
     if dispatcher (tstmst)=='none':
         line_no = 1
+        show_cmd = 1
         f = open (sys.argv[1],'r')
         for line in f:
             line_split = []
             ptr = line.find('#')
-            if ptr==0:
-                if line[ptr+1]=='#': print '\n', line.split('\n')[0]
-            elif ptr>0: line_split = line[0:ptr].split()
-            else:       line_split = line.split()
+            if ptr>0: line_split = line[0:ptr].split()
+            elif ptr<0: line_split = line.split()
+            elif line[ptr+1]=='#':
+                ccf_cmd = line.split('#')[-1].split('@')[-1].strip()
+                if   line.strip()=='##': print
+                elif ccf_cmd=='SHOW_CMD_OFF':   show_cmd = 0
+                elif ccf_cmd=='SHOW_CMD_ON':    show_cmd = 1
+                elif ccf_cmd=='SHOW_CMD_WHOLE': show_cmd = 2
+                if line[ptr+2]!='@' and line.strip()!='##':
+                    print line.strip()
+
             if len(line_split):
-                print 'CMD', line_no, ':', line_split
+                if show_cmd:
+                    print ' = Line', line_no, '=', line_split if show_cmd==1 else line.strip()
                 sys.argv[1:] = line_split
                 chk_argument ()
                 assert dispatcher (tstmst)!='none', 'ERROR: command not found'
             line_no += 1
-

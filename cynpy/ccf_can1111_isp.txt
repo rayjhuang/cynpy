@@ -1,0 +1,21 @@
+# cynpy command file
+# '##'-started line to print
+# '#' to comment out the tailed
+# USAGE:
+#> python -B isp.py ccf_can1111_isp.txt
+# PURPOSE:
+#  test CAN1111 by I2C/isp.py
+# 20240411 added
+# rayhuang@canyon-semi.com.tw
+# All Rights Reserved
+
+## information
+   rev
+   vars
+
+## tstmst I2C read/write
+   dump
+   read  C7
+   write C3 C7 # DEC=C7
+   read  C7    # REVID
+   write C3=0  # DEC=0

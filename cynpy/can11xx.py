@@ -5,9 +5,9 @@ class can11xx (object):
     '''
     can11xx hierarchy
     -----------------                                     canm0
-                                {i2c               {sfr  /
-                                generic_i2c        updrpl - ams ~ ~
-                                           \      /               |
+                                     {i2c          {sfr  /
+                                     geni2c        updrpl - ams
+                                           \      /
             sfr1108                         cani2c - - - tsti2c   ~ isp
            /                               /            /
     sfr11xx - sfr111x - sfr1110  }  can11xx    nvm - atm 

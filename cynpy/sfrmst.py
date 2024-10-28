@@ -4,7 +4,7 @@ FALSE = 0 # NAK, NO
 
 from atm import atm
 
-class generic_i2c (atm): # generic I2C master
+class geni2c (atm): # generic I2C master
     def __init__ (me, busmst, deva, rpt=0):
         me.deva = deva
         me.busmst = busmst # SFR master (I2C)
@@ -40,9 +40,9 @@ class generic_i2c (atm): # generic I2C master
 
 from can11xx import can11xx
 
-class cani2c (generic_i2c, can11xx):
+class cani2c (geni2c, can11xx):
     def __init__ (me, busmst, deva, rpt=0):
-        generic_i2c.__init__ (busmst, deva, rpt)
+        geni2c.__init__ (me, busmst, deva, rpt)
         can11xx.__init__ (me) # SFR target
 
         if me.sfr.revid:
